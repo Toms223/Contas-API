@@ -6,5 +6,5 @@ import data.db.entities.Token
 interface TokenRepository {
     fun isExpired(token: Token): Boolean
     fun createToken(account: Account): Token
-    fun getAccountToken(accountId: Int): Token?
+    fun getToken(value: String): Token?
 }

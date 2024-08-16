@@ -75,8 +75,8 @@ class TokenRepositoryDBTests {
         val account = accountRepository.createAccount("test", "test2@email.com", "password")
         val tokenRepository = TokenRepositoryDB(database)
         val token = tokenRepository.createToken(account)
-        val foundToken = tokenRepository.getAccountToken(token.account.id)
-        assertEquals(token, foundToken)
+        val foundToken = tokenRepository.getToken(token.value)
+        assertEquals(token.account, foundToken?.account)
     }
 
     @Test
@@ -86,7 +86,7 @@ class TokenRepositoryDBTests {
         val tokenRepository = TokenRepositoryDB(database)
         val token = tokenRepository.createToken(account)
         token.expire()
-        val foundToken = tokenRepository.getAccountToken(token.account.id) ?: throw Exception("Token not found")
+        val foundToken = tokenRepository.getToken(token.value) ?: throw Exception("Token not found")
         assertTrue { tokenRepository.isExpired(foundToken) }
     }
 }

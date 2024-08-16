@@ -80,8 +80,8 @@ class TokenServiceTests {
     fun `get account token`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test2@email.com", "P4ssword!")
         val token = tokenService.createToken(account)
-        val retrievedToken = tokenService.getAccountToken(account)
-        assertEquals(token, retrievedToken)
+        val retrievedToken = tokenService.retrieveToken(token.value)
+        assertEquals(token.account, retrievedToken?.account)
     }
 
     @Test

@@ -42,7 +42,7 @@ class TokenRepositoryDB(val database: Database): TokenRepository {
         return token
     }
 
-    override fun getAccountToken(accountId: Int): Token? {
-        return database.tokens.find { it.accountId eq accountId }
+    override fun getToken(value: String): Token? {
+        return database.tokens.find { it.value eq value}
     }
 }
