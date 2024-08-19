@@ -1,0 +1,689 @@
+openapi: 3.1.0
+info:
+  version: '1.0'
+  title: Contas - API
+  description: |-
+    Contas API is the web API responsible for taking input related to bills, making actions and returning the output of those actions. It is the backbone of the Contas App.
+  contact:
+    email: tomamiramart@gmail.com
+servers:
+  - url: http://localhost.com:8080
+tags:
+  - name: Account
+    description: Account related actions
+  - name: Bill
+    description: Bill related actions
+  - name: Carts
+    description: Carts related actions
+  - name: Items
+    description: Items related actions
+paths:
+  /accounts/{id}:
+    get:
+      tags:
+        - Account
+      summary: Retrieve Account information
+      operationId: accountGet
+      description: Retrieve account information by id
+      parameters:
+        - name: id
+          in: path
+          description: Account id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+           description: Account information retrieved
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Account'
+  /accounts/login:
+   post:
+     tags:
+       - Account
+     summary: Login into Account
+     operationId: accountLogin
+     description: Login into account using email and password
+     requestBody:
+       content:
+         application/json:
+           schema:
+             type: object
+             properties:
+               email:
+                 type: string
+                 example: 'email@example.com'
+               password:
+                 type: string
+                 example: 'SuperPassword123!'
+     responses:
+       '201':
+         description: Succesfully logged in account
+         content:
+           application/json:
+             schema:
+               type: object
+               properties:
+                 token:
+                   type: string
+                   example: oauishda98sydas89d
+  /accounts/register:
+   post:
+     tags:
+       - Account
+     summary: Register an Account
+     operationId: accountRegister
+     description: Register an account using email, password and username
+     requestBody:
+       content:
+         application/json:
+           schema:
+             type: object
+             properties:
+               email:
+                 type: string
+                 example: 'email@example.com'
+               password:
+                 type: string
+                 example: 'SuperPassword123!'
+               username:
+                 type: string
+                 example: 'RadicalMan'
+     responses:
+       '201':
+         description: Succesfully created account
+         content:
+           application/json:
+             schema:
+               type: object
+               properties:
+                 token:
+                   type: string
+                   example: oauishda98sydas89d
+  /accounts/{id}/bills:
+    get:
+      tags:
+        - Account
+      summary: Retrieve Account Bills
+      operationId: AccountGetBills
+      description: Retrieve Account Bills by ID
+      parameters:
+        - name: id
+          in: path
+          description: Account ID
+          required: true
+          schema:
+            type: string
+        - name: skip
+          in: query
+          description: Bills to skip
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: Bills to drop
+          required: true
+          schema:
+            type: integer
+        - name: continous
+          in: query
+          description: Continous Bills
+          required: true
+          schema:
+            type: boolean
+        - name: paid
+          in: query
+          description: Paid Bills
+          required: true
+          schema:
+            type: boolean
+        - name: before
+          in: query
+          description: Before Date
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: after
+          in: query
+          description: after Date
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successfully retrieved account-related bills
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                    bills:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Bill'
+  /accounts/{id}/carts:
+    get:
+      tags:
+        - Account
+      summary: Retrieve Account Carts
+      operationId: AccountGetCarts
+      description: Retrieve Account Carts by ID
+      parameters:
+        - name: id
+          in: path
+          description: Account ID
+          required: true
+          schema:
+            type: string
+        - name: skip
+          in: query
+          description: Carts to skip
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: Carts to drop
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved account-related carts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                    carts:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Cart'
+  /accounts/{id}/items:
+    get:
+      tags:
+        - Account
+      summary: Retrieve Account Items
+      operationId: AccountGetItems
+      description: Retrieve Account Items by ID
+      parameters:
+        - name: id
+          in: path
+          description: Account ID
+          required: true
+          schema:
+            type: string
+        - name: skip
+          in: query
+          description: Items to skip
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: Items to drop
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved account-related items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                    bills:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Item'
+  /bills/{id}:
+    get:
+      tags:
+        - Bill
+      summary: Retrieve a Bill
+      operationId: billGet
+      description: Retrive a Bill by ID
+      parameters:
+        - name: id
+          in: path
+          description: The bill ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bill information retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bill'
+    delete:
+      tags:
+        - Bill
+      summary: Delete a Bill
+      operationId: billDelete
+      description: Delete a Bill by ID
+      parameters:
+        - name: id
+          in: path
+          description: The bill ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully deleted Bill
+  /bills/{id}/pay:
+    put:
+      tags:
+        - Bill
+      summary: Pay a Bill
+      operationId: billPay
+      description: Pay a bill by ID
+      parameters:
+        - name: id
+          in: path
+          description: The bill ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully payed Bill
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bill'
+  /bills/{id}/unpay:
+    put:
+      tags:
+        - Bill
+      summary: Unpay a Bill
+      operationId: billUnpay
+      description: Unpay a bill by ID
+      parameters:
+        - name: id
+          in: path
+          description: The bill ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully unpayed Bill
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bill'
+  /bills:
+    put:
+      tags:
+        - Bill
+      summary: Update Bill information
+      operationId: billUpdate
+      description: Update Bill information by changing its properties
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bill'
+      responses:
+        '200':
+          description: Successfully altered Bill
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bill'
+    post:
+      tags:
+        - Bill
+      summary: Create new Bill
+      operationId: billCreate
+      description: Create a new Bill from properties
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: 'EDP - Office'
+                date:
+                  type: string
+                  format: date
+                  example: '2024-08-13'
+                continuous:
+                  type: boolean
+                  example: true
+      responses:
+        '201':
+          description: Successfully created Bill
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bill'
+  /carts:
+    post:
+      tags:
+        - Carts
+      summary: Create new Cart
+      operationId: cartCreate
+      description: Create a new Cart from properties
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountId:
+                  type: integer
+                  example: 3
+      responses:
+        '201':
+          description: Successfully created Cart         
+  /carts/{id}:
+    get:
+      tags:
+        - Carts
+      summary: Retrieve a Cart
+      operationId: cartGet
+      description: Retrieve Cart information by ID
+      parameters:
+      - name: id
+        in: path
+        description: The cart Id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Cart information retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+    delete:
+      tags:
+        - Carts
+      summary: Remove a Cart
+      operationId: cartDelete
+      description: Delete a Cart by ID
+      parameters:
+      - name: id
+        in: path
+        description: The cart Id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully deleted Cart     
+  /carts/{cartId}/items/{itemId}:
+    put:
+      tags:
+        - Carts
+      summary: Add item to cart
+      operationId: cartSingleAdd
+      description: Add item to cart by item and cart id
+      parameters:
+      - name: cartId
+        in: path
+        description: The cart id
+        required: true
+        schema:
+          type: string
+      - name: itemId
+        in: path
+        description: The Item id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully added item to cart
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+    delete:
+      tags:
+        - Carts
+      summary: Remove item from cart
+      operationId: cartSingleDelete
+      description: Remove item from cart by item and cart id
+      parameters:
+      - name: cartId
+        in: path
+        description: The cart id
+        required: true
+        schema:
+          type: string
+      - name: itemId
+        in: path
+        description: The Item id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully removed item from cart
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+  /carts/{cartId}/items:
+    put:
+      tags:
+        - Carts
+      summary: Add items to cart
+      operationId: cartMultipleAdd
+      description: Add items to cart by item and cart id
+      parameters:
+      - name: cartId
+        in: path
+        description: The cart id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: integer
+                    example: 123
+      responses:
+        '200':
+          description: Successfully added item to cart
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+    delete:
+      tags:
+        - Carts
+      summary: Remove items from cart
+      operationId: cartMultipleDelete
+      description: Remove item from cart by item and cart id
+      parameters:
+      - name: cartId
+        in: path
+        description: The cart id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: integer
+                    example: 123
+      responses:
+        '200':
+          description: Successfully removed item from cart
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+
+  /items:
+    post:
+      tags:
+        - Items
+      summary: Create a new Item
+      operationId: itemCreate
+      description: Create a new Item from properties
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: 'Rice'
+                accountId:
+                  type: integer
+                  example: 3
+      responses:
+        '201':
+          description: Successfully created Item
+  /items/{id}:
+    get:
+      tags:
+        - Items
+      summary: Retrieve an Item
+      operationId: itemGet
+      description: Retrieve Item information by ID
+      parameters:
+      - name: id
+        in: path
+        description: Item ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Item information retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+    delete:
+      tags:
+        - Items
+      summary: Delete an Item
+      operationId: itemDelete
+      description: Delete an Item by ID
+      parameters:
+      - name: id
+        in: path
+        description: Item ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully deleted Item
+          
+          
+          
+          
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 4
+        email:
+          type: string
+          example: 'email@example.com'
+        username:
+          type: string
+          example: 'RadicalMan'
+    Bill:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 3
+        name:
+         type: string
+         example: 'Electricity EDP'
+        date:
+         type: string
+         format: date
+         example: '2024-08-12'
+        continuous:
+          type: boolean
+          example: true
+        period:
+          type: integer
+          example: 30
+        paid:
+          type: boolean
+          example: false
+    Item:
+      type: object
+      properties:
+        id:
+         type: integer
+         example: 23
+        name:
+          type: string
+          example: 'Rice'
+    Cart:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 12
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+            
+       
+  securitySchemes:
+    tokenAuth:
+     type: http
+     scheme: bearer
+   
