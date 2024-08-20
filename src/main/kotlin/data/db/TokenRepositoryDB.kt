@@ -45,4 +45,8 @@ class TokenRepositoryDB(val database: Database): TokenRepository {
     override fun getToken(value: String): Token? {
         return database.tokens.find { it.value eq value}
     }
+
+    override fun getAccountToken(account: Account): Token? {
+        return database.tokens.find { it.accountId eq account.id }
+    }
 }

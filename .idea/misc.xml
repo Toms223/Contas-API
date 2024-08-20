@@ -4,9 +4,6 @@
   <component name="FrameworkDetectionExcludesConfiguration">
     <file type="web" url="file://$PROJECT_DIR$" />
   </component>
-  <component name="GithubDefaultAccount">
-    <option name="defaultAccountId" value="5ce26f3a-0fb8-4d80-8465-8604fadfe161" />
-  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="true" project-jdk-name="corretto-21" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>

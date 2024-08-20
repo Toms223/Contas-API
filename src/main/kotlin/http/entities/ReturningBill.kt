@@ -14,14 +14,9 @@ data class ReturningBill(
 ) {
     companion object {
         fun Iterable<Bill>.toReturningBills() = map {
-            ReturningBill(
-                it.id,
-                it.name,
-                it.date.toKotlinLocalDate(),
-                it.continuous,
-                it.period.months,
-                it.paid
-            )
+            it.toReturningBill()
         }
+
+        fun Bill.toReturningBill() = ReturningBill(this.id, this.name, this.date.toKotlinLocalDate(), this.continuous, this.period.months, this.paid)
     }
 }

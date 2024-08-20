@@ -6,10 +6,9 @@ import http.entities.ReturningItem.Companion.toReturningItems
 data class ReturningCart(val id: Int, val itemList: List<ReturningItem>){
     companion object {
         fun Iterable<Cart>.toReturningCarts() = map {
-            ReturningCart(
-                it.id,
-                it.items.toReturningItems()
-            )
+            it.toReturningCart()
         }
+
+        fun Cart.toReturningCart() = ReturningCart(this.id, this.items.toReturningItems())
     }
 }

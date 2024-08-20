@@ -16,4 +16,8 @@ class TokenService(val databaseRepository: DatabaseRepository) {
     fun isExpired(token: Token) = databaseRepository {
         tokenRepository.isExpired(token)
     }
+
+    fun getAccountToken(account: Account) = databaseRepository {
+        tokenRepository.getAccountToken(account)
+    }
 }
