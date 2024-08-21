@@ -7,10 +7,9 @@ import com.toms223.winterboot.annotations.mappings.PostMapping
 import com.toms223.winterboot.annotations.mappings.PutMapping
 import com.toms223.winterboot.annotations.parameters.Body
 import com.toms223.winterboot.annotations.parameters.Path
-import data.db.entities.Bill
-import http.entities.NewBill
-import http.entities.ReturningBill
-import http.entities.ReturningBill.Companion.toReturningBill
+import http.entities.bill.NewBill
+import http.entities.bill.ReturningBill
+import http.entities.bill.ReturningBill.Companion.toReturningBill
 import services.Services
 
 
@@ -27,27 +26,27 @@ class BillController(private val services: Services) {
     }
 
     @PutMapping("/bills/{id}/pay")
-    fun payBillById(@Path id: Int): ReturningBill{
+    fun payBillById(@Path id: Int): ReturningBill {
         val bill = services.billService.getBillById(id)
         services.billService.payBill(bill.id)
         return bill.toReturningBill()
     }
 
     @PutMapping("/bills/{id}/unpay")
-    fun unpayBillById(@Path id: Int): ReturningBill{
+    fun unpayBillById(@Path id: Int): ReturningBill {
         val bill = services.billService.getBillById(id)
         services.billService.unpayBill(bill.id)
         return bill.toReturningBill()
     }
 
     @PutMapping("/bills")
-    fun updateBillById(@Body receivingBill: ReturningBill): ReturningBill{
+    fun updateBillById(@Body receivingBill: ReturningBill): ReturningBill {
         services.billService.updateBill(receivingBill.id, receivingBill.name, receivingBill.date, receivingBill.continuous)
         return receivingBill
     }
 
     @PostMapping("/bills")
-    fun createBill(@Body newBill: NewBill): ReturningBill{
+    fun createBill(@Body newBill: NewBill): ReturningBill {
         val account = services.accountService.getAccountById(newBill.accountId)
         return services.billService.createBill(newBill.name, newBill.date, newBill.continuous, account).toReturningBill()
     }

@@ -1,9 +1,11 @@
-package http.entities
+package http.entities.bill
 
 import data.db.entities.Bill
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toKotlinLocalDate
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class ReturningBill(
     val id: Int,
     val name: String,

@@ -1,4 +1,4 @@
-package http.entities
+package http.entities.account
 
 import kotlinx.serialization.Serializable
 
