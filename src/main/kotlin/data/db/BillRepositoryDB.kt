@@ -2,6 +2,7 @@ package data.db
 
 import data.db.entities.Account
 import data.db.entities.Bill
+import data.db.exceptions.DatabaseErrorException
 import data.db.tables.Bills.bills
 import data.repo.BillRepository
 import kotlinx.datetime.LocalDate
@@ -31,10 +32,10 @@ class BillRepositoryDB(private val database: Database): BillRepository {
         }.toList().drop(skip)
     }
 
-    override fun getBillById(billId: Int): Bill {
+    override fun getBillById(billId: Int): Bill? {
         return database.bills.filter {
             it.id eq billId
-        }.single()
+        }.singleOrNull()
     }
 
     override fun createBill(name: String, date: LocalDate, continuous: Boolean, account: Account, period: Period): Bill {
@@ -47,6 +48,6 @@ class BillRepositoryDB(private val database: Database): BillRepository {
             this.period = period
         }
         assert(database.bills.add(bill) != 0) { "Couldn't create bill" }
-        return getBillById(bill.id)
+        return getBillById(bill.id) ?: throw DatabaseErrorException()
     }
 }

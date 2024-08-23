@@ -1,3 +1,9 @@
 package exceptions.token
 
-class TokenExpiredException(override val message: String = "Token value is no longer valid") : Exception(message)
+import exceptions.JsonResponseException
+
+class TokenExpiredException(
+    override val msg: String = "Token validity is expired",
+    override val title: String = "Token expired",
+    override val code: Int = 403,
+): JsonResponseException(msg, title ,code)

@@ -7,16 +7,15 @@ import org.ktorm.database.Database
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
 import org.ktorm.entity.add
-import org.ktorm.entity.first
 import org.ktorm.entity.firstOrNull
 
 class AccountRepositoryDB(private val database: Database): AccountRepository {
-    override fun getAccountById(id: Int): Account {
-        return database.accounts.firstOrNull { it.id eq id} ?: throw NoSuchElementException("Account with id $id not found")
+    override fun getAccountById(id: Int): Account? {
+        return database.accounts.firstOrNull { it.id eq id}
     }
 
-    override fun getAccountByEmail(email: String): Account {
-        return database.accounts.firstOrNull { it.email eq email } ?: throw NoSuchElementException("Account with email $email not found")
+    override fun getAccountByEmail(email: String): Account? {
+        return database.accounts.firstOrNull { it.email eq email }
     }
 
     override fun createAccount(username: String, email: String, passwordHash: String): Account {
@@ -29,7 +28,7 @@ class AccountRepositoryDB(private val database: Database): AccountRepository {
         return account
     }
 
-    override fun checkPassword(email: String, passwordHash: String): Account {
-        return database.accounts.first { (it.email eq email) and (it.passwordHash eq passwordHash) }
+    override fun checkPassword(email: String, passwordHash: String): Account? {
+        return database.accounts.firstOrNull { (it.email eq email) and (it.passwordHash eq passwordHash) }
     }
 }

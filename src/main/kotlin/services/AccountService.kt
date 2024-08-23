@@ -1,6 +1,7 @@
 package services
 
 import data.db.DatabaseRepository
+import exceptions.account.AccountNotFoundException
 import exceptions.account.InvalidEmailException
 import exceptions.account.InvalidPasswordException
 import exceptions.account.InvalidUsernameException
@@ -33,11 +34,11 @@ class AccountService(private val databaseRepository: DatabaseRepository) {
     }
 
     fun getAccountById(id: Int) = databaseRepository {
-        accountRepository.getAccountById(id)
+        accountRepository.getAccountById(id) ?: throw AccountNotFoundException()
     }
     fun getAccountByEmail(email: String) = databaseRepository {
         if(email == "") throw InvalidEmailException("Email cannot be empty")
-        accountRepository.getAccountByEmail(email)
+        accountRepository.getAccountByEmail(email) ?: throw AccountNotFoundException("No account of email found")
     }
     fun createAccount(username: String, email: String, password: String) = databaseRepository {
         if(username == "") throw InvalidUsernameException()
@@ -52,6 +53,6 @@ class AccountService(private val databaseRepository: DatabaseRepository) {
     }
     fun checkPassword(email: String, password: String) = databaseRepository {
         if(email == "") throw InvalidEmailException("Email cannot be empty")
-        accountRepository.checkPassword(email, hashPassword(password))
+        accountRepository.checkPassword(email, hashPassword(password)) ?: throw InvalidPasswordException()
     }
 }

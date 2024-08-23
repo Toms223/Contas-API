@@ -5,6 +5,7 @@ import com.toms223.winterboot.annotations.injection.Fruit
 import com.toms223.winterboot.annotations.injection.Seed
 import data.db.DatabaseRepository
 import services.Services
+import services.TokenService
 
 @Fruit
 class APISeeds {
@@ -13,4 +14,6 @@ class APISeeds {
 
     @Seed
     val services: Services = Services(databaseRepository)
+    @Seed
+    val tokenService: TokenService = services.tokenService
 }
