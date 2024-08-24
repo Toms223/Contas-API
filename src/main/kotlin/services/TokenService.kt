@@ -19,6 +19,6 @@ class TokenService(val databaseRepository: DatabaseRepository) {
     }
 
     fun getAccountToken(account: Account) = databaseRepository {
-        tokenRepository.getAccountToken(account) ?: throw TokenNotFoundException()
+        tokenRepository.getAccountToken(account)
     }
 }

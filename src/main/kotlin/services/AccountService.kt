@@ -1,10 +1,7 @@
 package services
 
 import data.db.DatabaseRepository
-import exceptions.account.AccountNotFoundException
-import exceptions.account.InvalidEmailException
-import exceptions.account.InvalidPasswordException
-import exceptions.account.InvalidUsernameException
+import exceptions.account.*
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
@@ -37,22 +34,23 @@ class AccountService(private val databaseRepository: DatabaseRepository) {
         accountRepository.getAccountById(id) ?: throw AccountNotFoundException()
     }
     fun getAccountByEmail(email: String) = databaseRepository {
-        if(email == "") throw InvalidEmailException("Email cannot be empty")
-        accountRepository.getAccountByEmail(email) ?: throw AccountNotFoundException("No account of email found")
+        if(email == "") throw InvalidEmailException()
+        accountRepository.getAccountByEmail(email) ?: throw AccountNotFoundException()
     }
     fun createAccount(username: String, email: String, password: String) = databaseRepository {
         if(username == "") throw InvalidUsernameException()
-        if(email == "") throw InvalidEmailException("Email cannot be empty")
+        if(email == "") throw InvalidEmailException()
         if(!email.matches("^(?!.*\\.{2})[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\$".toRegex()))
             throw InvalidEmailException()
-        if(password.length < 8) throw InvalidPasswordException("Password must be at least 8 characters long")
+        if(password.length < 8) throw InvalidPasswordException()
         if(!password.matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@\$!%*?&])[A-Za-z\\d@\$!%*?&]{8,}\$".toRegex()))
-            throw InvalidPasswordException("Password must contain at least one uppercase letter, " +
-                    "one lowercase letter, one digit, and one special character and must be at least 8 characters long")
+            throw InvalidPasswordException()
+        if(accountRepository.getAccountByEmail(email) != null) throw AccountAlreadyExistsException()
+
         accountRepository.createAccount(username, email, hashPassword(password))
     }
     fun checkPassword(email: String, password: String) = databaseRepository {
-        if(email == "") throw InvalidEmailException("Email cannot be empty")
+        if(email == "") throw InvalidEmailException()
         accountRepository.checkPassword(email, hashPassword(password)) ?: throw InvalidPasswordException()
     }
 }
