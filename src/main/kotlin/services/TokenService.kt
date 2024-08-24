@@ -3,10 +3,11 @@ package services
 import data.db.DatabaseRepository
 import data.db.entities.Account
 import data.db.entities.Token
+import exceptions.token.TokenNotFoundException
 
 class TokenService(val databaseRepository: DatabaseRepository) {
     fun retrieveToken(value: String) = databaseRepository {
-        tokenRepository.getToken(value)
+        tokenRepository.getToken(value) ?: throw TokenNotFoundException()
     }
 
     fun createToken(account: Account) = databaseRepository {
@@ -18,6 +19,6 @@ class TokenService(val databaseRepository: DatabaseRepository) {
     }
 
     fun getAccountToken(account: Account) = databaseRepository {
-        tokenRepository.getAccountToken(account)
+        tokenRepository.getAccountToken(account) ?: throw TokenNotFoundException()
     }
 }

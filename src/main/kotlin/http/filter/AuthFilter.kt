@@ -18,9 +18,9 @@ class AuthFilter(private val tokenService: TokenService) {
     fun checkToken(next: HttpHandler): HttpHandler {
         return { request ->
             if(authorizedUrls.none { request.uri.path.contains(it) }){
-                val header = request.header("Authorization") ?: throw TokenNotFoundException()
+                val header = request.header("Authorization") ?: throw TokenNotFoundException("Request must contain Authorization header")
                 if(header.split(" ")[0] != "Bearer") throw TokenNotFoundException("Token must be Bearer type")
-                val token = tokenService.retrieveToken(header.split(" ")[1]) ?: throw TokenNotFoundException("No token found for header value")
+                val token = tokenService.retrieveToken(header.split(" ")[1])
                 if(tokenService.isExpired(token)) throw TokenExpiredException()
                 next(request)
             }

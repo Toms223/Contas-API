@@ -2,7 +2,6 @@ package data.db
 
 import data.db.entities.Account
 import data.db.entities.Item
-import data.db.tables.Carts.carts
 import data.db.tables.ItemCarts.itemCarts
 import data.db.tables.Items.items
 import data.repo.ItemRepository
@@ -11,8 +10,8 @@ import org.ktorm.dsl.eq
 import org.ktorm.entity.*
 
 class ItemRepositoryDB(private val database: Database): ItemRepository{
-    override fun getItemById(id: Int): Item {
-        return database.items.first { it.id eq id }
+    override fun getItemById(id: Int): Item? {
+        return database.items.firstOrNull { it.id eq id }
     }
 
     override fun getAllAccountItems(account: Account, skip: Int, limit: Int): List<Item> {

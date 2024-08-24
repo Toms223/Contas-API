@@ -20,8 +20,8 @@ class CartRepositoryDB(private val database: Database): CartRepository {
         return carts
     }
 
-    override fun getCartById(cartId: Int): Cart {
-        val cart = database.carts.first { it.id eq cartId }
+    override fun getCartById(cartId: Int): Cart? {
+        val cart = database.carts.firstOrNull { it.id eq cartId } ?: return null
         cart.items = getCartItems(cart).toMutableList()
         return cart
     }
@@ -65,7 +65,7 @@ class CartRepositoryDB(private val database: Database): CartRepository {
 
     override fun deleteCart(cart: Cart) {
         database.itemCarts.filter { it.shoppingCartId eq cart.id }.single().delete()
-        database.carts.first { it.id eq cart.id }.delete()
+        cart.delete()
     }
 
 }

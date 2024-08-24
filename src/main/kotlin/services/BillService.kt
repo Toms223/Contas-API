@@ -3,6 +3,7 @@ package services
 import currentDate
 import data.db.DatabaseRepository
 import data.db.entities.Account
+import exceptions.bill.BillNotFoundException
 import exceptions.bill.InvalidNameException
 import exceptions.date.InvalidDateRangeException
 import kotlinx.datetime.*
@@ -26,7 +27,7 @@ class BillService(val databaseRepository: DatabaseRepository) {
     }
 
     fun getBillById(billId: Int) = databaseRepository {
-        billRepository.getBillById(billId)
+        billRepository.getBillById(billId) ?: throw BillNotFoundException()
     }
 
     fun createBill(name: String, date: LocalDate, continuous: Boolean, account: Account) = databaseRepository {
@@ -35,11 +36,11 @@ class BillService(val databaseRepository: DatabaseRepository) {
     }
 
     fun deleteBill(billId: Int) = databaseRepository {
-        billRepository.getBillById(billId).delete()
+        billRepository.getBillById(billId)?.delete() ?: throw BillNotFoundException()
     }
 
     fun updateBill(billId: Int, name: String? = null, date: LocalDate? = null, continuous: Boolean? = null) = databaseRepository {
-        val bill = billRepository.getBillById(billId)
+        val bill = billRepository.getBillById(billId) ?: throw BillNotFoundException()
         name?.let {
             if (name == "") throw InvalidNameException("Name cannot be empty")
             bill.changeName(name)
@@ -52,12 +53,12 @@ class BillService(val databaseRepository: DatabaseRepository) {
     }
 
     fun payBill(billId: Int) = databaseRepository {
-        val bill = billRepository.getBillById(billId)
+        val bill = billRepository.getBillById(billId) ?: throw BillNotFoundException()
         bill.pay()
     }
 
     fun unpayBill(billId: Int) = databaseRepository {
-        val bill = billRepository.getBillById(billId)
+        val bill = billRepository.getBillById(billId) ?: throw BillNotFoundException()
         bill.unpay()
     }
 }

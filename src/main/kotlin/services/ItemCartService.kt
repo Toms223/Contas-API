@@ -4,6 +4,8 @@ import data.db.DatabaseRepository
 import data.db.entities.Account
 import data.db.entities.Cart
 import data.db.entities.Item
+import exceptions.cart.CartNotFoundException
+import exceptions.item.ItemNotFoundException
 
 class ItemCartService(private val databaseRepository: DatabaseRepository) {
     fun createCart(account: Account) = databaseRepository {
@@ -23,11 +25,11 @@ class ItemCartService(private val databaseRepository: DatabaseRepository) {
     }
 
     fun getItemById(id: Int) = databaseRepository {
-        itemRepository.getItemById(id)
+        itemRepository.getItemById(id) ?: throw ItemNotFoundException()
     }
 
     fun getCartById(id: Int) = databaseRepository {
-        cartRepository.getCartById(id)
+        cartRepository.getCartById(id) ?: throw CartNotFoundException()
     }
 
     fun addItemToCart(cart: Cart, item: Item) = databaseRepository {
@@ -47,11 +49,11 @@ class ItemCartService(private val databaseRepository: DatabaseRepository) {
     }
 
     fun deleteCart(cartId: Int) = databaseRepository {
-        getCartById(cartId).delete()
+        cartRepository.deleteCart(getCartById(cartId))
     }
 
     fun deleteItem(itemId: Int) = databaseRepository {
-        getItemById(itemId).delete()
+        itemRepository.deleteItem(getItemById(itemId))
     }
 
     fun updateCartItems(cart: Cart) = databaseRepository {
