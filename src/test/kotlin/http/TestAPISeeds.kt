@@ -39,7 +39,7 @@ class TestAPISeeds {
                 name VARCHAR(255) NOT NULL,
                 date DATE NOT NULL,
                 continuous BOOLEAN NOT NULL DEFAULT TRUE,
-                period INTEGER DEFAULT 30,
+                period VARCHAR(255) DEFAULT 'P1M',
                 paid BOOLEAN NOT NULL DEFAULT FALSE
             );
             
@@ -66,6 +66,7 @@ class TestAPISeeds {
                 token_value VARCHAR(255) NOT NULL,
                 expiration TIMESTAMP NOT NULL
             );
+            
             """.trimIndent()
             )
         }

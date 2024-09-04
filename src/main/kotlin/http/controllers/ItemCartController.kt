@@ -31,8 +31,8 @@ class ItemCartController(private val services: Services) {
     }
 
     @DeleteMapping("/carts/{id}")
-    fun removeCartById(@Path id: Int): ReturningCart {
-        return services.itemCartService.getCartById(id).toReturningCart()
+    fun removeCartById(@Path id: Int) {
+        services.itemCartService.deleteCart(id)
     }
 
     @PutMapping("/carts/{cartId}/items/{itemId}")
@@ -51,7 +51,7 @@ class ItemCartController(private val services: Services) {
         return cart.items.toReturningItems()
     }
 
-    @PutMapping("/carts/{cartId}/items/")
+    @PutMapping("/carts/{cartId}/items")
     fun addItemsToCartById(@Path cartId: Int, @Body list: ItemList): List<ReturningItem> {
         val cart = services.itemCartService.getCartById(cartId)
         val itemList = list.items.map { services.itemCartService.getItemById(it) }
@@ -59,7 +59,7 @@ class ItemCartController(private val services: Services) {
         return cart.items.toReturningItems()
     }
 
-    @DeleteMapping("/carts/{cartId}/items/")
+    @DeleteMapping("/carts/{cartId}/items")
     fun removeItemsFromCartById(@Path cartId: Int, @Body list: ItemList): List<ReturningItem> {
         val cart = services.itemCartService.getCartById(cartId)
         val itemList = list.items.map { services.itemCartService.getItemById(it) }

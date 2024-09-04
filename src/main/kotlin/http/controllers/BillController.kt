@@ -11,6 +11,7 @@ import http.entities.bill.NewBill
 import http.entities.bill.ReturningBill
 import http.entities.bill.ReturningBill.Companion.toReturningBill
 import services.Services
+import java.time.Period
 
 
 @Controller
@@ -27,27 +28,22 @@ class BillController(private val services: Services) {
 
     @PutMapping("/bills/{id}/pay")
     fun payBillById(@Path id: Int): ReturningBill {
-        val bill = services.billService.getBillById(id)
-        services.billService.payBill(bill.id)
-        return bill.toReturningBill()
+        return services.billService.payBill(id).toReturningBill()
     }
 
     @PutMapping("/bills/{id}/unpay")
     fun unpayBillById(@Path id: Int): ReturningBill {
-        val bill = services.billService.getBillById(id)
-        services.billService.unpayBill(bill.id)
-        return bill.toReturningBill()
+        return services.billService.unpayBill(id).toReturningBill()
     }
 
     @PutMapping("/bills")
     fun updateBillById(@Body receivingBill: ReturningBill): ReturningBill {
-        services.billService.updateBill(receivingBill.id, receivingBill.name, receivingBill.date, receivingBill.continuous)
-        return receivingBill
+        return services.billService.updateBill(receivingBill.id, receivingBill.name, receivingBill.date, receivingBill.continuous, receivingBill.period).toReturningBill()
     }
 
     @PostMapping("/bills")
     fun createBill(@Body newBill: NewBill): ReturningBill {
         val account = services.accountService.getAccountById(newBill.accountId)
-        return services.billService.createBill(newBill.name, newBill.date, newBill.continuous, account).toReturningBill()
+        return services.billService.createBill(newBill.name, newBill.date, newBill.continuous, newBill.period ,account).toReturningBill()
     }
 }

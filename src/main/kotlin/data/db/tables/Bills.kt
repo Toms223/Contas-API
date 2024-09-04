@@ -12,7 +12,7 @@ object Bills: Table<Bill>("BILLS") {
     val name = varchar("NAME").bindTo { it.name }
     val date = date("DATE").bindTo { it.date }
     val continuous = boolean("CONTINUOUS").bindTo { it.continuous }
-    val period = int("PERIOD").transform({Period.ofDays(it)},{it.days}).bindTo { it.period }
+    val period = varchar("PERIOD").transform({Period.parse(it)},{it.toString()}).bindTo { it.period }
     val paid = boolean("PAID").bindTo { it.paid }
     val Database.bills get() = this.sequenceOf(Bills)
 }

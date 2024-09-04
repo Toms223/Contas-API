@@ -25,6 +25,11 @@ interface Bill: Entity<Bill> {
         this.flushChanges()
     }
 
+    fun changePeriod(newPeriod: Period){
+        period = newPeriod
+        this.flushChanges()
+    }
+
     fun continuous(){
         continuous = true
         this.flushChanges()
@@ -38,13 +43,16 @@ interface Bill: Entity<Bill> {
     fun pay(){
         paid = true
         if (continuous) {
-            date = date.plus(Period.ofMonths(1))
+            date = date.plus(period)
         }
         this.flushChanges()
     }
 
     fun unpay(){
         paid = false
+        if (continuous) {
+            date = date.minus(period)
+        }
         this.flushChanges()
     }
 }

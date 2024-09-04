@@ -64,7 +64,7 @@ class CartRepositoryDB(private val database: Database): CartRepository {
     }
 
     override fun deleteCart(cart: Cart) {
-        database.itemCarts.filter { it.shoppingCartId eq cart.id }.single().delete()
+        database.itemCarts.filter { it.shoppingCartId eq cart.id }.singleOrNull()?.delete()
         cart.delete()
     }
 

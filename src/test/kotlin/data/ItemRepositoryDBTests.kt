@@ -74,7 +74,7 @@ class ItemRepositoryDBTests {
         val item = itemRepository.createItem(account, "test2")
         val retrievedItem = itemRepository.getItemById(item.id)
         assertTrue {
-            retrievedItem.name == "test2"
+            retrievedItem?.name == "test2"
         }
     }
     @Test

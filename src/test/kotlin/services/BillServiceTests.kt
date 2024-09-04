@@ -2,11 +2,13 @@ package services
 
 import currentDate
 import data.db.DatabaseRepository
+import exceptions.bill.BillNotFoundException
 import kotlinx.datetime.*
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.ktorm.database.Database
+import java.time.Period
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
@@ -69,7 +71,7 @@ class BillServiceTests {
     fun `create a bill`() {
         val account = AccountService(databaseRepository).createAccount("test", "test@email.com", "P4ssword!")
         val date = Instant.currentDate
-        val bill = billService.createBill("test", date, false, account)
+        val bill = billService.createBill("test", date, false, Period.ofDays(30), account, )
         assertTrue {
             bill.name == "test" &&
                     bill.date == Instant.currentDate.toJavaLocalDate() &&
@@ -82,7 +84,7 @@ class BillServiceTests {
         val account = AccountService(databaseRepository).createAccount("test", "test2@email.com", "P4ssword!")
         val date = Instant.currentDate
         val bills = (1..10).map {
-            billService.createBill("test$it", date, false, account)
+            billService.createBill("test$it", date, false, Period.ofDays(30), account)
         }
         val accountBills = billService.getAccountBills(account)
         assertContentEquals(bills, accountBills)
@@ -92,7 +94,7 @@ class BillServiceTests {
     fun `get bill by id`() {
         val account = AccountService(databaseRepository).createAccount("test", "test3@email.com", "P4ssword!")
         val date = Instant.currentDate
-        val bill = billService.createBill("test", date, false, account)
+        val bill = billService.createBill("test", date, false, Period.ofDays(30), account)
         val retrievedBill = billService.getBillById(bill.id)
         assertEquals(bill, retrievedBill)
     }
@@ -101,19 +103,21 @@ class BillServiceTests {
     fun `delete a bill`() {
         val account = AccountService(databaseRepository).createAccount("test", "test4@email.com", "P4ssword!")
         val date = Instant.currentDate
-        val bill = billService.createBill("test", date, false, account)
+        val bill = billService.createBill("test", date, false, Period.ofDays(30), account)
         billService.deleteBill(bill.id)
-        assertThrows<NoSuchElementException> { billService.getBillById(bill.id) }
+        assertThrows<BillNotFoundException> { billService.getBillById(bill.id) }
     }
 
     @Test
     fun `update a bill`() {
         val account = AccountService(databaseRepository).createAccount("test", "test5@email.com", "P4ssword!")
         val date = Instant.currentDate
-        val bill = billService.createBill("test", date, false, account)
-        billService.updateBill(bill.id, "new name", date.plus(1, DateTimeUnit.DAY),true)
+        val bill = billService.createBill("test", date, false, Period.ofDays(30), account)
+        billService.updateBill(bill.id, "new name", date.plus(1, DateTimeUnit.DAY),true, Period.ofMonths(2))
         val updatedBill = billService.getBillById(bill.id)
-        assertEquals(bill,updatedBill)
+        assertTrue{
+            updatedBill.name == "new name"
+        }
     }
 
 }

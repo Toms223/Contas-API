@@ -23,8 +23,9 @@ class AuthFilter(private val tokenService: TokenService) {
                 val token = tokenService.retrieveToken(header.split(" ")[1])
                 if(tokenService.isExpired(token)) throw TokenExpiredException()
                 next(request)
+            } else {
+                next(request)
             }
-            next(request)
         }
     }
 }
