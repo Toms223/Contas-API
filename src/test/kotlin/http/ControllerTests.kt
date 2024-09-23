@@ -1,4 +1,4 @@
-package http.controllers
+package http
 
 import com.toms223.winterboot.Winter
 import http.entities.account.LoginInfo
@@ -206,6 +206,29 @@ class ControllerTests {
     }
 
     @Test
+    fun `should get item by id`(){
+        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
+        val item = getReturningItem(client(createNewItemRequest(user.id, user.token)).body.toString())
+        val request = Request(Method.GET, "/items/${item.id}")
+        .header("Authorization", "Bearer ${user.token}")
+        val response = client(request)
+        val returningItem = getReturningItem(response.body.toString())
+        assertEquals(item, returningItem)
+    }
+
+    @Test
+    fun `should remove item by id`(){
+        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
+        val item = getReturningItem(client(createNewItemRequest(user.id, user.token)).body.toString())
+        val request = Request(Method.DELETE, "/items/${item.id}")
+        .header("Authorization", "Bearer ${user.token}")
+        client(request)
+        val response = client(Request(Method.GET, "/items/${item.id}")
+            .header("Authorization", "Bearer ${user.token}"))
+        assertTrue(response.status == Status.NOT_FOUND)
+    }
+
+    @Test
     fun `should get cart by id`(){
         val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
         val cart = getReturningCart(client(createNewCartRequest(user.id, user.token)).body.toString())
@@ -234,6 +257,33 @@ class ControllerTests {
             .header("Authorization", "Bearer ${user.token}")
         val updatedCart = getReturningCart(client(updatedCartRequest).body.toString())
         assertTrue(returningItems.size == 10)
+        assertContentEquals(updatedCart.itemList, returningItems)
+    }
+
+    @Test
+    fun `should remove items from cart`(){
+        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
+        val cart = getReturningCart(client(createNewCartRequest(user.id, user.token)).body.toString())
+        val items = (1..10).map {
+            getReturningItem(client(createNewItemRequest(user.id, user.token)).body.toString())
+        }
+        val itemList = ItemList(items.map { it.id })
+        val putRequest = Request(Method.PUT, "/carts/${cart.id}/items")
+            .header("Authorization", "Bearer ${user.token}")
+            .body(Json.encodeToString(itemList))
+        client(putRequest)
+        val removedItems = items.subList(0, 5)
+        val removedItemList = ItemList(removedItems.map { it.id })
+        val request = Request(Method.DELETE, "/carts/${cart.id}/items")
+            .header("Authorization", "Bearer ${user.token}")
+            .body(Json.encodeToString(removedItemList))
+        val response = client(request)
+        val jsonResponse = Json.parseToJsonElement(response.body.toString()).jsonObject
+        val returningItems = Json.decodeFromJsonElement<List<ReturningItem>>(jsonResponse["data"] ?: throw AssertionError("No items found"))
+        val updatedCartRequest = Request(Method.GET, "/carts/${cart.id}")
+            .header("Authorization", "Bearer ${user.token}")
+        val updatedCart = getReturningCart(client(updatedCartRequest).body.toString())
+        assertTrue(returningItems.size == 5)
         assertContentEquals(updatedCart.itemList, returningItems)
     }
 
@@ -278,4 +328,35 @@ class ControllerTests {
             .header("Authorization", "Bearer ${user.token}"))
         assertTrue(response.status == Status.NOT_FOUND)
     }
+
+    @Test
+    fun `should add a single item to cart`(){
+        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
+        val item = getReturningItem(client(createNewItemRequest(user.id, user.token)).body.toString())
+        val cart = getReturningCart(client(createNewCartRequest(user.id, user.token)).body.toString())
+        val request = Request(Method.PUT, "/carts/${cart.id}/items/${item.id}")
+        .header("Authorization", "Bearer ${user.token}")
+        val response = client(request)
+        val json = Json.parseToJsonElement(response.body.toString()).jsonObject
+        val itemList = Json.decodeFromJsonElement<List<ReturningItem>>(json["data"] ?: throw AssertionError("No items found"))
+        assertTrue(itemList.size == 1)
+        assertEquals(item, itemList.first())
+    }
+
+    @Test
+    fun `should remove a single item from cart`(){
+        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
+        val item = getReturningItem(client(createNewItemRequest(user.id, user.token)).body.toString())
+        val cart = getReturningCart(client(createNewCartRequest(user.id, user.token)).body.toString())
+        client(Request(Method.PUT, "/carts/${cart.id}/items/${item.id}")
+            .header("Authorization", "Bearer ${user.token}"))
+        val request = Request(Method.DELETE, "/carts/${cart.id}/items/${item.id}")
+        .header("Authorization", "Bearer ${user.token}")
+        val response = client(request)
+        val json = Json.parseToJsonElement(response.body.toString()).jsonObject
+        val itemList = Json.decodeFromJsonElement<List<ReturningItem>>(json["data"] ?: throw AssertionError("No items found"))
+        assertTrue(itemList.isEmpty())
+        assertEquals(null, itemList.firstOrNull())
+    }
+
 }
