@@ -5,11 +5,13 @@ import data.db.BillRepositoryDB
 import org.ktorm.database.Database
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toJavaLocalDate
+import kotlin.random.Random
 import kotlin.test.*
 
 class BillRepositoryDBTests {
+    private val randomInt: Int = Random.nextInt()
     private val database = Database.connect(
-        url = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;",
+        url = "jdbc:h2:mem:test${randomInt};DB_CLOSE_DELAY=-1;",
         driver = "org.h2.Driver"
     )
     init {
@@ -29,7 +31,7 @@ class BillRepositoryDBTests {
                 name VARCHAR(255) NOT NULL,
                 date DATE NOT NULL,
                 continuous BOOLEAN NOT NULL DEFAULT TRUE,
-                period INTEGER DEFAULT 30,
+                period VARCHAR(255) DEFAULT 'P1M',
                 paid BOOLEAN NOT NULL DEFAULT FALSE
             );
 

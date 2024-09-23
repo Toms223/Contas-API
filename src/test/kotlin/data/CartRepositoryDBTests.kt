@@ -3,21 +3,25 @@ package data
 import data.db.AccountRepositoryDB
 import data.db.CartRepositoryDB
 import data.db.ItemRepositoryDB
+import org.junit.jupiter.api.AfterAll
 import org.ktorm.database.Database
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 class CartRepositoryDBTests {
-    private val database = Database.connect(
-        url = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;",
-        driver = "org.h2.Driver"
-    )
-    init {
-        database.useConnection { conn ->
-            conn.createStatement().executeUpdate(
-                """
-            -- noinspection SqlNoDataSourceInspectionForFile
+    companion object {
+        private val randomInt: Int = Random.nextInt()
+        private val database = Database.connect(
+            url = "jdbc:h2:mem:test${randomInt};DB_CLOSE_DELAY=-1;",
+            driver = "org.h2.Driver"
+        )
+
+        init {
+            database.useConnection { conn ->
+                conn.createStatement().executeUpdate(
+                    """
             CREATE TABLE IF NOT EXISTS ACCOUNTS(
                id SERIAL PRIMARY KEY,
                username VARCHAR(255) NOT NULL,
@@ -31,7 +35,7 @@ class CartRepositoryDBTests {
                 name VARCHAR(255) NOT NULL,
                 date DATE NOT NULL,
                 continuous BOOLEAN NOT NULL DEFAULT TRUE,
-                period INTEGER DEFAULT 30,
+                period VARCHAR(255) DEFAULT 'P1M',
                 paid BOOLEAN NOT NULL DEFAULT FALSE
             );
             
@@ -59,8 +63,34 @@ class CartRepositoryDBTests {
                 expiration TIMESTAMP NOT NULL
             );
             """.trimIndent()
-            )
+                )
+            }
+        }
 
+        @JvmStatic
+        @AfterAll
+        fun clear(): Unit {
+            val tableNames = mutableListOf<String>()
+            val query = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PUBLIC'"
+            database.useConnection { connection ->
+                connection.createStatement().use { statement ->
+                    val resultSet = statement.executeQuery(query)
+                    while (resultSet.next()) {
+                        val tableName = resultSet.getString("TABLE_NAME")
+                        tableNames.add(tableName)
+                    }
+                }
+
+                // Step 2: Drop all tables
+                connection.createStatement().use { statement ->
+                    for (table in tableNames) {
+                        // Generate DROP TABLE IF EXISTS statement
+                        val dropQuery = "DROP TABLE IF EXISTS $table CASCADE"
+                        println("Executing: $dropQuery")  // For debugging
+                        statement.execute(dropQuery)
+                    }
+                }
+            }
         }
     }
     @Test

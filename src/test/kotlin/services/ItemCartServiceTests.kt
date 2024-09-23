@@ -1,24 +1,29 @@
 package services
 
 import data.db.DatabaseRepository
+import exceptions.cart.CartNotFoundException
+import exceptions.item.ItemNotFoundException
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.ktorm.database.Database
+import kotlin.random.Random
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ItemCartServiceTests {
-    private val database = Database.connect(
-        url = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;",
-        driver = "org.h2.Driver"
-    )
+    companion object {
+        private val randomInt: Int = Random.nextInt()
+        private val database = Database.connect(
+            url = "jdbc:h2:mem:test${randomInt};DB_CLOSE_DELAY=-1;",
+            driver = "org.h2.Driver"
+        )
 
-    init {
-        database.useConnection { conn ->
-            conn.createStatement().executeUpdate(
-                """
-            -- noinspection SqlNoDataSourceInspectionForFile
+        init {
+            database.useConnection { conn ->
+                conn.createStatement().executeUpdate(
+                    """
             CREATE TABLE IF NOT EXISTS ACCOUNTS(
                id SERIAL PRIMARY KEY,
                username VARCHAR(255) NOT NULL,
@@ -32,7 +37,7 @@ class ItemCartServiceTests {
                 name VARCHAR(255) NOT NULL,
                 date DATE NOT NULL,
                 continuous BOOLEAN NOT NULL DEFAULT TRUE,
-                period INTEGER DEFAULT 30,
+                period VARCHAR(255) DEFAULT 'P1M',
                 paid BOOLEAN NOT NULL DEFAULT FALSE
             );
             
@@ -60,11 +65,38 @@ class ItemCartServiceTests {
                 expiration TIMESTAMP NOT NULL
             );
             """.trimIndent()
-            )
+                )
+            }
+        }
+
+        @JvmStatic
+        @AfterAll
+        fun clear(): Unit {
+            val tableNames = mutableListOf<String>()
+            val query = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PUBLIC'"
+            database.useConnection { connection ->
+                connection.createStatement().use { statement ->
+                    val resultSet = statement.executeQuery(query)
+                    while (resultSet.next()) {
+                        val tableName = resultSet.getString("TABLE_NAME")
+                        tableNames.add(tableName)
+                    }
+                }
+
+                // Step 2: Drop all tables
+                connection.createStatement().use { statement ->
+                    for (table in tableNames) {
+                        // Generate DROP TABLE IF EXISTS statement
+                        val dropQuery = "DROP TABLE IF EXISTS $table CASCADE"
+                        println("Executing: $dropQuery")  // For debugging
+                        statement.execute(dropQuery)
+                    }
+                }
+            }
         }
     }
 
-    private val databaseRepository = DatabaseRepository("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;")
+    private val databaseRepository = DatabaseRepository("jdbc:h2:mem:test${randomInt};DB_CLOSE_DELAY=-1;")
     private val itemCartService = ItemCartService(databaseRepository)
 
     @Test
@@ -173,7 +205,7 @@ class ItemCartServiceTests {
         val account = databaseRepository.accountRepository.createAccount("test", "test11@email.com", "P4ssword!")
         val cart = itemCartService.createCart(account)
         itemCartService.deleteCart(cart.id)
-        assertThrows<NoSuchElementException> { itemCartService.getCartById(cart.id) }
+        assertThrows<CartNotFoundException> { itemCartService.getCartById(cart.id) }
     }
 
     @Test
@@ -184,7 +216,7 @@ class ItemCartServiceTests {
         itemCartService.addItemToCart(cart, item)
         assertTrue { cart.items.contains(item) }
         itemCartService.deleteItem(item.id)
-        assertThrows<NoSuchElementException> { itemCartService.getItemById(item.id) }
+        assertThrows<ItemNotFoundException> { itemCartService.getItemById(item.id) }
         itemCartService.updateCartItems(cart)
         assertTrue { !cart.items.contains(item) }
     }
