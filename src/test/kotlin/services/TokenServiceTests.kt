@@ -1,7 +1,8 @@
 package services
 
-import currentDate
-import data.db.DatabaseRepository
+import com.toms223.services.TokenService
+import com.toms223.currentDate
+import com.toms223.data.db.DatabaseRepository
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlinx.datetime.plus
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import org.ktorm.database.Database
 import kotlin.random.Random
-import kotlin.test.AfterTest
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 

@@ -1,7 +1,7 @@
 package data
 
-import data.db.AccountRepositoryDB
-import data.db.TokenRepositoryDB
+import com.toms223.data.db.AccountRepositoryDB
+import com.toms223.data.db.TokenRepositoryDB
 import org.junit.jupiter.api.AfterAll
 import org.ktorm.database.Database
 import java.time.LocalDate

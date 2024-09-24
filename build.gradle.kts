@@ -21,6 +21,7 @@ dependencies {
     implementation("org.http4k:http4k-server-jetty:5.27.0.0")
     implementation(files("libs/WinterBoot-1.0-SNAPSHOT.jar"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation("org.postgresql:postgresql:42.7.4")
 }
 
 tasks.test {
@@ -28,6 +29,15 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(21)
+}
+
+tasks.withType<Jar> {
+    manifest {
+        attributes["Main-Class"] = "com.toms223.MainKt"
+    }
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    from(sourceSets.main.get().output)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.withType<KotlinCompile>{

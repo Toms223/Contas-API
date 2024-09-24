@@ -1,8 +1,9 @@
 package services
 
-import data.db.DatabaseRepository
-import exceptions.cart.CartNotFoundException
-import exceptions.item.ItemNotFoundException
+import com.toms223.data.db.DatabaseRepository
+import com.toms223.exceptions.cart.CartNotFoundException
+import com.toms223.exceptions.item.ItemNotFoundException
+import com.toms223.services.ItemCartService
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

@@ -1,7 +1,7 @@
 package data
 
-import data.db.AccountRepositoryDB
-import data.db.BillRepositoryDB
+import com.toms223.data.db.AccountRepositoryDB
+import com.toms223.data.db.BillRepositoryDB
 import org.ktorm.database.Database
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toJavaLocalDate

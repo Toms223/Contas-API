@@ -1,8 +1,10 @@
 package services
 
-import currentDate
-import data.db.DatabaseRepository
-import exceptions.bill.BillNotFoundException
+import com.toms223.currentDate
+import com.toms223.data.db.DatabaseRepository
+import com.toms223.exceptions.bill.BillNotFoundException
+import com.toms223.services.AccountService
+import com.toms223.services.BillService
 import kotlinx.datetime.*
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertTrue

@@ -1,6 +1,7 @@
 package services
 
-import data.db.DatabaseRepository
+import com.toms223.data.db.DatabaseRepository
+import com.toms223.services.AccountService
 import org.junit.jupiter.api.AfterAll
 import org.ktorm.database.Database
 import kotlin.random.Random

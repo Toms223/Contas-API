@@ -2,10 +2,10 @@ package http
 
 import com.toms223.winterboot.annotations.injection.Fruit
 import com.toms223.winterboot.annotations.injection.Seed
-import data.db.DatabaseRepository
+import com.toms223.data.db.DatabaseRepository
 import org.ktorm.database.Database
-import services.Services
-import services.TokenService
+import com.toms223.services.Services
+import com.toms223.services.TokenService
 
 @Fruit
 class TestAPISeeds {

@@ -1,6 +1,6 @@
 package data
 
-import data.db.AccountRepositoryDB
+import com.toms223.data.db.AccountRepositoryDB
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

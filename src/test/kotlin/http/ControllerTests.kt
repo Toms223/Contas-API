@@ -1,16 +1,16 @@
 package http
 
 import com.toms223.winterboot.Winter
-import http.entities.account.LoginInfo
-import http.entities.account.RegisteringInfo
-import http.entities.account.ReturningAccount
-import http.entities.bill.NewBill
-import http.entities.bill.ReturningBill
-import http.entities.cart.NewCart
-import http.entities.cart.ReturningCart
-import http.entities.item.ItemList
-import http.entities.item.NewItem
-import http.entities.item.ReturningItem
+import com.toms223.http.entities.account.LoginInfo
+import com.toms223.http.entities.account.RegisteringInfo
+import com.toms223.http.entities.account.ReturningAccount
+import com.toms223.http.entities.bill.NewBill
+import com.toms223.http.entities.bill.ReturningBill
+import com.toms223.http.entities.cart.NewCart
+import com.toms223.http.entities.cart.ReturningCart
+import com.toms223.http.entities.item.ItemList
+import com.toms223.http.entities.item.NewItem
+import com.toms223.http.entities.item.ReturningItem
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
