@@ -8,9 +8,9 @@ import org.ktorm.schema.boolean
 import org.ktorm.schema.int
 
 object ItemCarts: Table<ItemCart>("ITEM_SHOPPING_CART") {
-    val id = int("ID").primaryKey().bindTo { it.id }
-    val itemId = int("ITEMID").references(Items) { it.item }
-    val shoppingCartId = int("SHOPPINGCARTID").references(Carts) { it.cart }
-    val inCart = boolean("IN_CART").bindTo { it.inCart }
+    val id = int("id").primaryKey().bindTo { it.id }
+    val itemId = int("item_id").references(Items) { it.item }
+    val shoppingCartId = int("shopping_cart_id").references(Carts) { it.cart }
+    val inCart = boolean("in_cart").bindTo { it.inCart }
     val Database.itemCarts get() = this.sequenceOf(ItemCarts)
 }

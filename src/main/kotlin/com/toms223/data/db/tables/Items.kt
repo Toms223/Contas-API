@@ -8,8 +8,8 @@ import org.ktorm.schema.int
 import org.ktorm.schema.varchar
 
 object Items: Table<Item>("ITEMS") {
-    val id = int("ID").primaryKey().bindTo { it.id }
-    val name = varchar("NAME").bindTo { it.name }
-    val account = int("ACCOUNTID").references(Accounts) { it.account }
+    val id = int("id").primaryKey().bindTo { it.id }
+    val name = varchar("name").bindTo { it.name }
+    val account = int("account_id").references(Accounts) { it.account }
     val Database.items get() = this.sequenceOf(Items)
 }

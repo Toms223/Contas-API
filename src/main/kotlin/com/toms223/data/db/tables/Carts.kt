@@ -7,7 +7,7 @@ import org.ktorm.schema.Table
 import org.ktorm.schema.int
 
 object Carts: Table<Cart>("SHOPPING_CARTS") {
-    val id = int("ID").primaryKey().bindTo { it.id }
-    val accountId = int("ACCOUNTID").references(Accounts) { it.account }
+    val id = int("id").primaryKey().bindTo { it.id }
+    val accountId = int("account_id").references(Accounts) { it.account }
     val Database.carts get() = this.sequenceOf(Carts)
 }

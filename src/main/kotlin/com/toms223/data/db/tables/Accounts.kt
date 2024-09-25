@@ -8,9 +8,9 @@ import org.ktorm.schema.int
 import org.ktorm.schema.varchar
 
 object Accounts: Table<Account>("ACCOUNTS") {
-    val id = int("ID").primaryKey().bindTo { it.id }
-    val username = varchar("USERNAME").bindTo { it.username }
-    val email = varchar("EMAIL").bindTo { it.email }
-    val passwordHash = varchar("PASSWORD_HASH").bindTo { it.passwordHash }
+    val id = int("id").primaryKey().bindTo { it.id }
+    val username = varchar("username").bindTo { it.username }
+    val email = varchar("email").bindTo { it.email }
+    val passwordHash = varchar("password_hash").bindTo { it.passwordHash }
     val Database.accounts get() = this.sequenceOf(Accounts)
 }

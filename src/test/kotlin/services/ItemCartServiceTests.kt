@@ -17,7 +17,7 @@ class ItemCartServiceTests {
     companion object {
         private val randomInt: Int = Random.nextInt()
         private val database = Database.connect(
-            url = "jdbc:h2:mem:test${randomInt};DB_CLOSE_DELAY=-1;",
+            url = "jdbc:h2:mem:test${randomInt};DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=FALSE",
             driver = "org.h2.Driver"
         )
 
@@ -25,6 +25,8 @@ class ItemCartServiceTests {
             database.useConnection { conn ->
                 conn.createStatement().executeUpdate(
                     """
+            -- noinspection SqlNoDataSourceInspectionForFile
+
             CREATE TABLE IF NOT EXISTS ACCOUNTS(
                id SERIAL PRIMARY KEY,
                username VARCHAR(255) NOT NULL,
@@ -34,7 +36,7 @@ class ItemCartServiceTests {
             
             CREATE TABLE IF NOT EXISTS BILLS(
                 id SERIAL PRIMARY KEY,
-                accountId INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE,
+                account_id INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE,
                 name VARCHAR(255) NOT NULL,
                 date DATE NOT NULL,
                 continuous BOOLEAN NOT NULL DEFAULT TRUE,
@@ -44,24 +46,24 @@ class ItemCartServiceTests {
             
             CREATE TABLE IF NOT EXISTS ITEMS(
                 id SERIAL PRIMARY KEY,
-                accountId INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE,
+                account_id INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE,
                 name VARCHAR(255) NOT NULL
             );
             
             CREATE TABLE IF NOT EXISTS SHOPPING_CARTS(
                  id SERIAL PRIMARY KEY,
-                 accountId INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE
+                 account_id INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE
             );
             
             CREATE TABLE IF NOT EXISTS ITEM_SHOPPING_CART(
                 id SERIAL PRIMARY KEY,
-                itemId INTEGER NOT NULL REFERENCES ITEMS(id) ON DELETE CASCADE,
-                shoppingCartId INTEGER NOT NULL REFERENCES SHOPPING_CARTS(id) ON DELETE CASCADE,
+                item_id INTEGER NOT NULL REFERENCES ITEMS(id) ON DELETE CASCADE,
+                shopping_cart_id INTEGER NOT NULL REFERENCES SHOPPING_CARTS(id) ON DELETE CASCADE,
                 in_cart BOOLEAN NOT NULL DEFAULT FALSE
             );
             
             CREATE TABLE IF NOT EXISTS TOKENS(
-                accountId INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE PRIMARY KEY,
+                account_id INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE PRIMARY KEY,
                 token_value VARCHAR(255) NOT NULL,
                 expiration TIMESTAMP NOT NULL
             );
@@ -97,7 +99,7 @@ class ItemCartServiceTests {
         }
     }
 
-    private val databaseRepository = DatabaseRepository("jdbc:h2:mem:test${randomInt};DB_CLOSE_DELAY=-1;")
+    private val databaseRepository = DatabaseRepository("jdbc:h2:mem:test${randomInt};DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=FALSE")
     private val itemCartService = ItemCartService(databaseRepository)
 
     @Test
