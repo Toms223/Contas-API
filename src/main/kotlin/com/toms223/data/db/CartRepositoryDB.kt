@@ -27,7 +27,11 @@ class CartRepositoryDB(private val database: Database): CartRepository {
     }
 
     override fun addItemsToCart(cart: Cart, items: List<Item>) {
-        items.forEach {
+        if(cart.items.containsAll(items)) {
+            return
+        }
+
+        (items - cart.items.toSet()).forEach {
             val itemCart = ItemCart {
                 this.cart = cart
                 this.item = it
