@@ -1,7 +1,7 @@
 -- Insert placeholder data into ACCOUNTS table
 INSERT INTO ACCOUNTS (username, email, password_hash) VALUES
-('john_doe', 'john.doe@example.com', 'hashed_password_123'),
-('jane_doe', 'jane.doe@example.com', 'hashed_password_456');
+('john_doe', 'john.doe@example.com', '760427ffffff90ffffffb2383810ffffffceffffffdefffffffbffffffd8ffff'),
+('jane_doe', 'jane.doe@example.com', '760427ffffff90ffffffb2383810ffffffceffffffdefffffffbffffffd8ffff');
 
 -- Insert placeholder data into BILLS table
 INSERT INTO BILLS (account_id, name, date, continuous, period, paid) VALUES

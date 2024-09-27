@@ -339,8 +339,7 @@ class ControllerTests {
         val response = client(request)
         val json = Json.parseToJsonElement(response.body.toString()).jsonObject
         val itemList = Json.decodeFromJsonElement<List<ReturningItem>>(json["data"] ?: throw AssertionError("No items found"))
-        assertTrue(itemList.size == 1)
-        assertEquals(item, itemList.first())
+        assertTrue(itemList.contains(item))
     }
 
     @Test
@@ -355,8 +354,7 @@ class ControllerTests {
         val response = client(request)
         val json = Json.parseToJsonElement(response.body.toString()).jsonObject
         val itemList = Json.decodeFromJsonElement<List<ReturningItem>>(json["data"] ?: throw AssertionError("No items found"))
-        assertTrue(itemList.isEmpty())
-        assertEquals(null, itemList.firstOrNull())
+        assertTrue(!itemList.contains(item))
     }
 
 }

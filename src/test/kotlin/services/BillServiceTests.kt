@@ -62,7 +62,8 @@ class BillServiceTests {
                 id SERIAL PRIMARY KEY,
                 item_id INTEGER NOT NULL REFERENCES ITEMS(id) ON DELETE CASCADE,
                 shopping_cart_id INTEGER NOT NULL REFERENCES SHOPPING_CARTS(id) ON DELETE CASCADE,
-                in_cart BOOLEAN NOT NULL DEFAULT FALSE
+                in_cart BOOLEAN NOT NULL DEFAULT FALSE,
+                quantity INTEGER NOT NULL DEFAULT 1
             );
             
             CREATE TABLE IF NOT EXISTS TOKENS(

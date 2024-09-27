@@ -8,4 +8,5 @@ interface ItemCart: Entity<ItemCart> {
     var item: Item
     var cart: Cart
     var inCart: Boolean
+    var quantity: Int
 }

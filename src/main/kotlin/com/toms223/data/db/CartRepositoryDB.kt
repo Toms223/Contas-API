@@ -27,15 +27,23 @@ class CartRepositoryDB(private val database: Database): CartRepository {
     }
 
     override fun addItemsToCart(cart: Cart, items: List<Item>) {
-        if(cart.items.containsAll(items)) {
-            return
+        val itemQuantities = items.groupingBy { it }.eachCount().toMutableMap()
+        database.itemCarts.forEach { item ->
+            if(item.cart.id == cart.id) {
+                val quantity = itemQuantities[item.item]
+                if(quantity != null) {
+                    item.quantity += quantity
+                    itemQuantities.remove(item.item)
+                    item.flushChanges()
+                }
+            }
         }
-
-        (items - cart.items.toSet()).forEach {
+        (itemQuantities).forEach {
             val itemCart = ItemCart {
                 this.cart = cart
-                this.item = it
+                this.item = it.key
                 this.inCart = true
+                this.quantity = it.value
             }
             assert(database.itemCarts.add(itemCart) > 0) { "Couldn't add item to cart" }
         }
@@ -43,10 +51,16 @@ class CartRepositoryDB(private val database: Database): CartRepository {
     }
 
     override fun removeItemsFromCart(cart: Cart, items: List<Item>) {
-        items.forEach { item ->
+        val itemQuantities = items.groupingBy { it }.eachCount()
+        itemQuantities.forEach { item ->
             database.itemCarts.filter { it.shoppingCartId eq cart.id }.forEach {
-                if (it.item.id == item.id) {
-                    it.delete()
+                if(it.item.id == item.key.id) {
+                    it.quantity -= item.value
+                    if(it.quantity <= 0) {
+                        it.delete()
+                    } else {
+                        it.flushChanges()
+                    }
                 }
             }
         }
@@ -55,7 +69,9 @@ class CartRepositoryDB(private val database: Database): CartRepository {
     }
 
     override fun getCartItems(cart: Cart): List<Item> {
-        return database.itemCarts.filter { it.shoppingCartId eq cart.id }.map { it.item }
+        return database.itemCarts.filter{it.shoppingCartId eq cart.id}.flatMap { itemCart ->
+            List(itemCart.quantity) { itemCart.item }
+        }
     }
 
     override fun createCart(account: Account): Cart {
