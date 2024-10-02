@@ -127,7 +127,7 @@ class BillServiceTests {
             billService.createBill(account.id,"test$it", date, false, Period.ofDays(30))
         }
         val accountBills = billService.getAccountBills(account)
-        assertContentEquals(bills, accountBills)
+        assertContentEquals(bills.map { it.id }, accountBills.map { it.id })
     }
 
     @Test

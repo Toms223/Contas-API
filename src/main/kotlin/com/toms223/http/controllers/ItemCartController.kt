@@ -37,25 +37,25 @@ class ItemCartController(private val services: Services) {
 
     @PutMapping("/carts/{cartId}/items/{itemId}")
     fun addItemToCartById(@Cookie id: Int, @Path cartId: Int, @Path itemId: Int): List<ReturningItem> {
-        val cart = services.itemCartService.addItemToCart(id, cartId, itemId) ?: throw CartNotFoundException()
+        val cart = services.itemCartService.addItemToCart(id, cartId, itemId)
         return cart.items.toReturningItems()
     }
 
     @DeleteMapping("/carts/{cartId}/items/{itemId}")
     fun removeItemFromCartById(@Cookie id: Int, @Path cartId: Int, @Path itemId: Int): List<ReturningItem> {
-        val cart = services.itemCartService.removeItemFromCart(id, cartId, itemId) ?: throw CartNotFoundException()
+        val cart = services.itemCartService.removeItemFromCart(id, cartId, itemId)
         return cart.items.toReturningItems()
     }
 
     @PutMapping("/carts/{cartId}/items")
     fun addItemsToCartById(@Cookie id: Int, @Path cartId: Int, @Body list: ItemList): List<ReturningItem> {
-        val cart = services.itemCartService.addItemsToCart(id, cartId, list.items) ?: throw CartNotFoundException()
+        val cart = services.itemCartService.addItemsToCart(id, cartId, list.items)
         return cart.items.toReturningItems()
     }
 
     @DeleteMapping("/carts/{cartId}/items")
     fun removeItemsFromCartById(@Cookie id: Int, @Path cartId: Int, @Body list: ItemList): List<ReturningItem> {
-        val cart = services.itemCartService.removeItemsFromCart(id, cartId, list.items) ?: throw CartNotFoundException()
+        val cart = services.itemCartService.removeItemsFromCart(id, cartId, list.items)
         return cart.items.toReturningItems()
     }
 
