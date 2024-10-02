@@ -32,9 +32,9 @@ class TokenRepositoryDB(val database: Database): TokenRepository {
         return false
     }
 
-    override fun createToken(account: Account): Token {
+    override fun createToken(accountId: Int): Token {
         val token = Token {
-            this.account = account
+            this.account = Account {id = accountId}
             this.expiration = LocalDate.now().plusDays(30)
             this.value = generateNewToken()
         }
@@ -46,7 +46,7 @@ class TokenRepositoryDB(val database: Database): TokenRepository {
         return database.tokens.find { it.value eq value}
     }
 
-    override fun getAccountToken(account: Account): Token? {
-        return database.tokens.find { it.accountId eq account.id }
+    override fun getAccountToken(accountId: Int): Token? {
+        return database.tokens.find { it.accountId eq accountId }
     }
 }

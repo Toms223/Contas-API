@@ -8,6 +8,7 @@ import com.toms223.data.repo.BillRepository
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toJavaLocalDate
 import org.ktorm.database.Database
+import org.ktorm.dsl.and
 import org.ktorm.dsl.between
 import org.ktorm.dsl.eq
 import org.ktorm.entity.*
@@ -32,15 +33,15 @@ class BillRepositoryDB(private val database: Database): BillRepository {
         }.toList().drop(skip)
     }
 
-    override fun getBillById(billId: Int): Bill? {
+    override fun getBillById(accountId: Int, billId: Int, ): Bill? {
         return database.bills.filter {
-            it.id eq billId
+            (it.id eq billId) and (it.accountId eq accountId)
         }.singleOrNull()
     }
 
-    override fun createBill(name: String, date: LocalDate, continuous: Boolean, account: Account, period: Period): Bill {
+    override fun createBill(accountId: Int, name: String, date: LocalDate, continuous: Boolean, period: Period): Bill {
         val bill = Bill {
-            this.account = account
+            this.account = Account { id = accountId }
             this.name = name
             this.date = date.toJavaLocalDate()
             this.continuous = continuous
@@ -48,6 +49,6 @@ class BillRepositoryDB(private val database: Database): BillRepository {
             this.period = period
         }
         assert(database.bills.add(bill) != 0) { "Couldn't create bill" }
-        return getBillById(bill.id) ?: throw DatabaseErrorException()
+        return bill
     }
 }

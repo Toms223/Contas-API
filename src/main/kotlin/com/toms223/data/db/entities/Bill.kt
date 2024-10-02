@@ -7,7 +7,7 @@ import java.time.Period
 
 interface Bill: Entity<Bill> {
     companion object : Entity.Factory<Bill>()
-    val id: Int
+    var id: Int
     var account: Account
     var name: String
     var date: LocalDate

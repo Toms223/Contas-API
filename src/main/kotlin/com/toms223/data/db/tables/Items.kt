@@ -10,6 +10,6 @@ import org.ktorm.schema.varchar
 object Items: Table<Item>("ITEMS") {
     val id = int("id").primaryKey().bindTo { it.id }
     val name = varchar("name").bindTo { it.name }
-    val account = int("account_id").references(Accounts) { it.account }
+    val accountId = int("account_id").references(Accounts) { it.account }
     val Database.items get() = this.sequenceOf(Items)
 }

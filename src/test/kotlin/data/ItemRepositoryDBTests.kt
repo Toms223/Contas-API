@@ -55,7 +55,8 @@ class ItemRepositoryDBTests {
                 item_id INTEGER NOT NULL REFERENCES ITEMS(id) ON DELETE CASCADE,
                 shopping_cart_id INTEGER NOT NULL REFERENCES SHOPPING_CARTS(id) ON DELETE CASCADE,
                 in_cart BOOLEAN NOT NULL DEFAULT FALSE,
-                quantity INTEGER NOT NULL DEFAULT 1
+                quantity INTEGER NOT NULL DEFAULT 1,
+                account_id INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE
             );
             
             CREATE TABLE IF NOT EXISTS TOKENS(
@@ -99,7 +100,7 @@ class ItemRepositoryDBTests {
         val itemRepository = ItemRepositoryDB(database)
         val accountRepositoryDB = AccountRepositoryDB(database)
         val account = accountRepositoryDB.createAccount("test", "test@email.com", "password")
-        val item = itemRepository.createItem(account, "test")
+        val item = itemRepository.createItem(account.id, "test")
         assertTrue {
             item.name == "test"
         }
@@ -109,8 +110,8 @@ class ItemRepositoryDBTests {
         val itemRepository = ItemRepositoryDB(database)
         val accountRepositoryDB = AccountRepositoryDB(database)
         val account = accountRepositoryDB.createAccount("test", "test2@email.com", "password")
-        val item = itemRepository.createItem(account, "test2")
-        val retrievedItem = itemRepository.getItemById(item.id)
+        val item = itemRepository.createItem(account.id, "test2")
+        val retrievedItem = itemRepository.getItemById(account.id, item.id)
         assertTrue {
             retrievedItem?.name == "test2"
         }
@@ -120,9 +121,9 @@ class ItemRepositoryDBTests {
         val accountRepositoryDB = AccountRepositoryDB(database)
         val account = accountRepositoryDB.createAccount("test", "test3@email.com", "password")
         val itemRepository = ItemRepositoryDB(database)
-        itemRepository.createItem(account, "test3")
-        itemRepository.createItem(account, "test4")
-        val items = itemRepository.getAllAccountItems(account,0, 2)
+        itemRepository.createItem(account.id, "test3")
+        itemRepository.createItem(account.id, "test4")
+        val items = itemRepository.getAllAccountItems(account.id,0, 2)
         assertTrue {
             items.size == 2
         }

@@ -57,7 +57,8 @@ class CartRepositoryDBTests {
                 item_id INTEGER NOT NULL REFERENCES ITEMS(id) ON DELETE CASCADE,
                 shopping_cart_id INTEGER NOT NULL REFERENCES SHOPPING_CARTS(id) ON DELETE CASCADE,
                 in_cart BOOLEAN NOT NULL DEFAULT FALSE,
-                quantity INTEGER NOT NULL DEFAULT 1
+                quantity INTEGER NOT NULL DEFAULT 1,
+                account_id INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE
             );
             
             CREATE TABLE IF NOT EXISTS TOKENS(
@@ -101,8 +102,8 @@ class CartRepositoryDBTests {
         val accountRepository = AccountRepositoryDB(database)
         val account = accountRepository.createAccount("test", "test@email.com", "password")
         val cartRepository = CartRepositoryDB(database)
-        val cart = cartRepository.createCart(account)
-        assertEquals(account, cart.account)
+        val cart = cartRepository.createCart(account.id)
+        assertEquals(account.id, cart.account.id)
     }
 
     @Test
@@ -110,9 +111,9 @@ class CartRepositoryDBTests {
         val accountRepository = AccountRepositoryDB(database)
         val account = accountRepository.createAccount("test", "test2@email.com", "password")
         val cartRepository = CartRepositoryDB(database)
-        val cart = cartRepository.createCart(account)
+        val cart = cartRepository.createCart(account.id)
         val foundCart = cartRepository.getUserCarts(account.id, 0, 1).first()
-        assertEquals(cart, foundCart)
+        assertEquals(cart.id, foundCart.id)
     }
 
     @Test
@@ -120,9 +121,9 @@ class CartRepositoryDBTests {
         val accountRepository = AccountRepositoryDB(database)
         val account = accountRepository.createAccount("test", "test3@email.com", "password")
         val cartRepository = CartRepositoryDB(database)
-        val cart = cartRepository.createCart(account)
-        val foundCart = cartRepository.getCartById(cart.id)
-        assertEquals(cart, foundCart)
+        val cart = cartRepository.createCart(account.id)
+        val foundCart = cartRepository.getCartById(account.id, cart.id)
+        assertEquals(cart.id, foundCart?.id)
     }
 
     @Test
@@ -130,12 +131,12 @@ class CartRepositoryDBTests {
         val accountRepository = AccountRepositoryDB(database)
         val account = accountRepository.createAccount("test", "test4@email.com", "password")
         val cartRepository = CartRepositoryDB(database)
-        val cart = cartRepository.createCart(account)
+        val cart = cartRepository.createCart(account.id)
         val itemRepository = ItemRepositoryDB(database)
-        val items = (0..9).map { itemRepository.createItem(account, "test$it") }
-        cartRepository.addItemsToCart(cart, items)
-        val cartItems = cartRepository.getCartItems(cart)
-        assertContentEquals(items, cartItems)
+        val items = (0..9).map { itemRepository.createItem(account.id, "test$it") }
+        cartRepository.addItemsToCart(account.id, cart.id, items.map { it.id })
+        val cartItems = cartRepository.getCartItems(account.id, cart.id)
+        assertContentEquals(items.map { it.id }, cartItems.map { it.id })
     }
 
     @Test
@@ -143,12 +144,12 @@ class CartRepositoryDBTests {
         val accountRepository = AccountRepositoryDB(database)
         val account = accountRepository.createAccount("test", "test5@email.com", "password")
         val cartRepository = CartRepositoryDB(database)
-        val cart = cartRepository.createCart(account)
+        val cart = cartRepository.createCart(account.id)
         val itemRepository = ItemRepositoryDB(database)
-        val items = (0..9).map { itemRepository.createItem(account, "test$it") }
-        cartRepository.addItemsToCart(cart, items)
-        cartRepository.removeItemsFromCart(cart, items.take(5))
-        val cartItems = cartRepository.getCartItems(cart)
-        assertContentEquals(items.takeLast(5), cartItems)
+        val items = (0..9).map { itemRepository.createItem(account.id, "test$it") }
+        cartRepository.addItemsToCart(account.id, cart.id, items.map { it.id })
+        cartRepository.removeItemsFromCart(account.id, cart.id, items.take(5).map { it.id })
+        val cartItems = cartRepository.getCartItems(account.id, cart.id)
+        assertContentEquals(items.takeLast(5).map { it.id }, cartItems.map { it.id })
     }
 }

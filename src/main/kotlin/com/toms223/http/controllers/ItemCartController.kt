@@ -1,5 +1,6 @@
 package com.toms223.http.controllers
 
+import com.toms223.exceptions.cart.CartNotFoundException
 import com.toms223.winterboot.annotations.Controller
 import com.toms223.winterboot.annotations.mappings.DeleteMapping
 import com.toms223.winterboot.annotations.mappings.GetMapping
@@ -7,7 +8,6 @@ import com.toms223.winterboot.annotations.mappings.PostMapping
 import com.toms223.winterboot.annotations.mappings.PutMapping
 import com.toms223.winterboot.annotations.parameters.Body
 import com.toms223.winterboot.annotations.parameters.Path
-import com.toms223.http.entities.cart.NewCart
 import com.toms223.http.entities.cart.ReturningCart
 import com.toms223.http.entities.cart.ReturningCart.Companion.toReturningCart
 import com.toms223.http.entities.item.ReturningItem
@@ -16,71 +16,62 @@ import com.toms223.http.entities.item.ItemList
 import com.toms223.http.entities.item.NewItem
 import com.toms223.http.entities.item.ReturningItem.Companion.toReturningItem
 import com.toms223.services.Services
+import com.toms223.winterboot.annotations.parameters.Cookie
 
 @Controller
 class ItemCartController(private val services: Services) {
     @PostMapping("/carts")
-    fun createNewCart(@Body newCart: NewCart): ReturningCart {
-        val account = services.accountService.getAccountById(newCart.accountId)
-        return services.itemCartService.createCart(account).toReturningCart()
+    fun createNewCart(@Cookie id: Int): ReturningCart {
+        return services.itemCartService.createCart(id).toReturningCart()
     }
 
-    @GetMapping("/carts/{id}")
-    fun getCartById(@Path id: Int): ReturningCart {
-        return services.itemCartService.getCartById(id).toReturningCart()
+    @GetMapping("/carts/{cartId}")
+    fun getCartById(@Cookie id: Int, @Path cartId: Int): ReturningCart {
+        return services.itemCartService.getCartById(id, cartId).toReturningCart()
     }
 
-    @DeleteMapping("/carts/{id}")
-    fun removeCartById(@Path id: Int) {
-        services.itemCartService.deleteCart(id)
+    @DeleteMapping("/carts/{cartId}")
+    fun removeCartById(@Cookie id: Int, @Path cartId: Int) {
+        services.itemCartService.deleteCart(id, cartId)
     }
 
     @PutMapping("/carts/{cartId}/items/{itemId}")
-    fun addItemToCartById(@Path cartId: Int, @Path itemId: Int): List<ReturningItem> {
-        val cart = services.itemCartService.getCartById(cartId)
-        val item = services.itemCartService.getItemById(itemId)
-        services.itemCartService.addItemToCart(cart, item)
+    fun addItemToCartById(@Cookie id: Int, @Path cartId: Int, @Path itemId: Int): List<ReturningItem> {
+        val cart = services.itemCartService.addItemToCart(id, cartId, itemId) ?: throw CartNotFoundException()
         return cart.items.toReturningItems()
     }
 
     @DeleteMapping("/carts/{cartId}/items/{itemId}")
-    fun removeItemFromCartById(@Path cartId: Int, @Path itemId: Int): List<ReturningItem> {
-        val cart = services.itemCartService.getCartById(cartId)
-        val item = services.itemCartService.getItemById(itemId)
-        services.itemCartService.removeItemFromCart(cart, item)
+    fun removeItemFromCartById(@Cookie id: Int, @Path cartId: Int, @Path itemId: Int): List<ReturningItem> {
+        val cart = services.itemCartService.removeItemFromCart(id, cartId, itemId) ?: throw CartNotFoundException()
         return cart.items.toReturningItems()
     }
 
     @PutMapping("/carts/{cartId}/items")
-    fun addItemsToCartById(@Path cartId: Int, @Body list: ItemList): List<ReturningItem> {
-        val cart = services.itemCartService.getCartById(cartId)
-        val itemList = list.items.map { services.itemCartService.getItemById(it) }
-        services.itemCartService.addItemsToCart(cart, itemList)
+    fun addItemsToCartById(@Cookie id: Int, @Path cartId: Int, @Body list: ItemList): List<ReturningItem> {
+        val cart = services.itemCartService.addItemsToCart(id, cartId, list.items) ?: throw CartNotFoundException()
         return cart.items.toReturningItems()
     }
 
     @DeleteMapping("/carts/{cartId}/items")
-    fun removeItemsFromCartById(@Path cartId: Int, @Body list: ItemList): List<ReturningItem> {
-        val cart = services.itemCartService.getCartById(cartId)
-        val itemList = list.items.map { services.itemCartService.getItemById(it) }
-        services.itemCartService.removeItemsFromCart(cart, itemList)
+    fun removeItemsFromCartById(@Cookie id: Int, @Path cartId: Int, @Body list: ItemList): List<ReturningItem> {
+        val cart = services.itemCartService.removeItemsFromCart(id, cartId, list.items) ?: throw CartNotFoundException()
         return cart.items.toReturningItems()
     }
 
     @PostMapping("/items")
-    fun createNewItem(@Body newItem: NewItem): ReturningItem {
-        val account = services.accountService.getAccountById(newItem.accountId)
-        return services.itemCartService.createItem(account, newItem.name).toReturningItem()
+    fun createNewItem(@Cookie id: Int, @Body newItem: NewItem): ReturningItem {
+        return services.itemCartService.createItem(id, newItem.name).toReturningItem()
     }
 
-    @GetMapping("/items/{id}")
-    fun getItemById(@Path id: Int): ReturningItem {
-        return services.itemCartService.getItemById(id).toReturningItem()
+    @GetMapping("/items/{itemId}")
+    fun getItemById(@Cookie id: Int, @Path itemId: Int): ReturningItem {
+        return services.itemCartService.getItemById(id, itemId).toReturningItem()
     }
 
-    @DeleteMapping("/items/{id}")
-    fun deleteItemById(@Path id: Int) {
-        services.itemCartService.deleteItem(id)
+    @DeleteMapping("/items/{itemId}")
+    fun deleteItemById(@Cookie id: Int, @Path itemId: Int) {
+        services.itemCartService.deleteItem(id, itemId)
     }
 
 }

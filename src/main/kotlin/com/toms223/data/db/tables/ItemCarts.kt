@@ -12,6 +12,7 @@ object ItemCarts: Table<ItemCart>("ITEM_SHOPPING_CART") {
     val itemId = int("item_id").references(Items) { it.item }
     val shoppingCartId = int("shopping_cart_id").references(Carts) { it.cart }
     val inCart = boolean("in_cart").bindTo { it.inCart }
+    val accountId = int("account_id").references(Accounts) { it.account }
     val quantity = int("quantity").bindTo { it.quantity }
     val Database.itemCarts get() = this.sequenceOf(ItemCarts)
 }

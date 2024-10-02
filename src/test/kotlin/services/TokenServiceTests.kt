@@ -66,6 +66,7 @@ class TokenServiceTests {
                 item_id INTEGER NOT NULL REFERENCES ITEMS(id) ON DELETE CASCADE,
                 shopping_cart_id INTEGER NOT NULL REFERENCES SHOPPING_CARTS(id) ON DELETE CASCADE,
                 in_cart BOOLEAN NOT NULL DEFAULT FALSE,
+                account_id INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE,
                 quantity INTEGER NOT NULL DEFAULT 1
                 
             );
@@ -109,24 +110,24 @@ class TokenServiceTests {
     @Test
     fun `create token`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test@email.com", "P4ssword!")
-        val token = tokenService.createToken(account)
+        val token = tokenService.createToken(account.id)
         assertTrue {
-            token.account == account && token.value.isNotEmpty() && token.expiration == Instant.currentDate.plus(30, DateTimeUnit.DAY).toJavaLocalDate()
+            token.account.id == account.id && token.value.isNotEmpty() && token.expiration == Instant.currentDate.plus(30, DateTimeUnit.DAY).toJavaLocalDate()
         }
     }
 
     @Test
     fun `get account token`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test2@email.com", "P4ssword!")
-        val token = tokenService.createToken(account)
+        val token = tokenService.createToken(account.id)
         val retrievedToken = tokenService.retrieveToken(token.value)
-        assertEquals(token.account, retrievedToken.account)
+        assertEquals(token.account.id, retrievedToken.account.id)
     }
 
     @Test
     fun `is expired`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test3@email.com", "P4ssword!")
-        val token = tokenService.createToken(account)
+        val token = tokenService.createToken(account.id)
         assertFalse {
             tokenService.isExpired(token)
         }

@@ -6,6 +6,8 @@ import com.toms223.exceptions.token.TokenExpiredException
 import com.toms223.exceptions.token.TokenNotFoundException
 import org.http4k.core.HttpHandler
 import com.toms223.services.TokenService
+import org.http4k.core.cookie.cookie
+import org.http4k.core.cookie.cookies
 
 @Branch
 class AuthFilter(private val tokenService: TokenService) {
@@ -17,10 +19,11 @@ class AuthFilter(private val tokenService: TokenService) {
     fun checkToken(next: HttpHandler): HttpHandler {
         return { request ->
             if(authorizedUrls.none { request.uri.path.contains(it) }){
-                val header = request.header("Authorization") ?: throw TokenNotFoundException("Request must contain Authorization header")
-                if(header.split(" ")[0] != "Bearer") throw TokenNotFoundException("Token must be Bearer type")
-                val token = tokenService.retrieveToken(header.split(" ")[1])
-                if(tokenService.isExpired(token)) throw TokenExpiredException()
+                val tokenValue = request.cookie("token") ?: throw TokenNotFoundException("Unauthorized")
+                val id = request.cookie("id") ?: throw TokenNotFoundException("Unauthorized")
+                val token = tokenService.retrieveToken(tokenValue.value)
+                if(tokenService.isExpired(token)) throw TokenExpiredException("Unauthorized")
+                if(token.account.id != id.value.toInt()) throw TokenNotFoundException("Unauthorized")
                 next(request)
             } else {
                 next(request)

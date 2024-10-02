@@ -58,7 +58,8 @@ class TokenRepositoryDBTests {
                 item_id INTEGER NOT NULL REFERENCES ITEMS(id) ON DELETE CASCADE,
                 shopping_cart_id INTEGER NOT NULL REFERENCES SHOPPING_CARTS(id) ON DELETE CASCADE,
                 in_cart BOOLEAN NOT NULL DEFAULT FALSE,
-                quantity INTEGER NOT NULL DEFAULT 1
+                quantity INTEGER NOT NULL DEFAULT 1,
+                account_id INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE
             );
             
             CREATE TABLE IF NOT EXISTS TOKENS(
@@ -102,9 +103,9 @@ class TokenRepositoryDBTests {
         val accountRepository = AccountRepositoryDB(database)
         val account = accountRepository.createAccount("test", "test@email.com", "password")
         val tokenRepository = TokenRepositoryDB(database)
-        val token = tokenRepository.createToken(account)
+        val token = tokenRepository.createToken(account.id)
         assertTrue {
-            token.account == account && token.expiration == LocalDate.now().plusDays(30)
+            token.account.id == account.id && token.expiration == LocalDate.now().plusDays(30)
         }
     }
 
@@ -113,9 +114,9 @@ class TokenRepositoryDBTests {
         val accountRepository = AccountRepositoryDB(database)
         val account = accountRepository.createAccount("test", "test2@email.com", "password")
         val tokenRepository = TokenRepositoryDB(database)
-        val token = tokenRepository.createToken(account)
+        val token = tokenRepository.createToken(account.id)
         val foundToken = tokenRepository.getToken(token.value)
-        assertEquals(token.account, foundToken?.account)
+        assertEquals(token.account.id, foundToken?.account?.id)
     }
 
     @Test
@@ -123,7 +124,7 @@ class TokenRepositoryDBTests {
         val accountRepository = AccountRepositoryDB(database)
         val account = accountRepository.createAccount("test", "test3@email.com", "password")
         val tokenRepository = TokenRepositoryDB(database)
-        val token = tokenRepository.createToken(account)
+        val token = tokenRepository.createToken(account.id)
         token.expire()
         val foundToken = tokenRepository.getToken(token.value) ?: throw Exception("Token not found")
         assertTrue { tokenRepository.isExpired(foundToken) }

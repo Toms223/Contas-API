@@ -4,10 +4,10 @@ import com.toms223.data.db.entities.Account
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ReturningAccount (val id: Int, val username: String, val email: String, val token: String){
+data class ReturningAccount (val username: String, val email: String){
     companion object{
-        fun Account.toReturningAccount(token: String): ReturningAccount {
-            return ReturningAccount(this.id, this.username, this.email, token)
+        fun Account.toReturningAccount(): ReturningAccount {
+            return ReturningAccount(this.username, this.email)
         }
     }
 }

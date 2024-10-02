@@ -53,7 +53,8 @@ class BillRepositoryDBTests {
                 item_id INTEGER NOT NULL REFERENCES ITEMS(id) ON DELETE CASCADE,
                 shopping_cart_id INTEGER NOT NULL REFERENCES SHOPPING_CARTS(id) ON DELETE CASCADE,
                 in_cart BOOLEAN NOT NULL DEFAULT FALSE,
-                quantity INTEGER NOT NULL DEFAULT 1
+                quantity INTEGER NOT NULL DEFAULT 1,
+                account_id INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE
             );
             
             CREATE TABLE IF NOT EXISTS TOKENS(
@@ -72,7 +73,7 @@ class BillRepositoryDBTests {
         val accountRepository = AccountRepositoryDB(database)
         val account = accountRepository.createAccount("test", "test@email.com", "password")
         val billRepository = BillRepositoryDB(database)
-        val bill = billRepository.createBill("test", LocalDate(2123, 1, 1), true, account)
+        val bill = billRepository.createBill(account.id,"test", LocalDate(2123, 1, 1), true)
         println(bill)
         assertTrue {
             bill.name == "test" && bill.date == LocalDate(2123, 1, 1).toJavaLocalDate() && bill.continuous
@@ -83,9 +84,9 @@ class BillRepositoryDBTests {
         val accountRepository = AccountRepositoryDB(database)
         val account = accountRepository.createAccount("test", "test2@email.com", "password")
         val billRepository = BillRepositoryDB(database)
-        val bill = billRepository.createBill("another", LocalDate(2123, 1, 1), true, account)
-        val testBill = billRepository.getBillById(bill.id)
-        assertTrue{bill == testBill}
+        val bill = billRepository.createBill(account.id,"another", LocalDate(2123, 1, 1), true)
+        val testBill = billRepository.getBillById(bill.id, account.id)
+        assertTrue{bill.id == testBill?.id}
     }
 
     @Test
@@ -94,9 +95,9 @@ class BillRepositoryDBTests {
         val account = accountRepository.createAccount("test", "test3@email.com", "password")
         val billRepository = BillRepositoryDB(database)
         val bills = (1..3).map{
-            billRepository.createBill("test$it", LocalDate(2123, 1, 1), true, account)
+            billRepository.createBill(account.id,"test$it", LocalDate(2123, 1, 1), true)
         }
         val accountBills = billRepository.getAccountBills(account.id, 0, 3, true, false, LocalDate(2123, 1, 1), LocalDate(2123, 1, 1))
-        assertContentEquals(bills, accountBills)
+        assertContentEquals(bills.map { it.id }, accountBills.map { it.id })
     }
 }

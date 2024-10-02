@@ -11,7 +11,7 @@ import kotlinx.serialization.encoding.Encoder
 import java.time.Period
 
 @Serializable
-data class NewBill(val name: String, val date: LocalDate, val continuous: Boolean, @Serializable(PeriodSerializer::class) val period: Period, val accountId: Int)
+data class NewBill(val name: String, val date: LocalDate, val continuous: Boolean, @Serializable(PeriodSerializer::class) val period: Period)
 
 object PeriodSerializer : KSerializer<Period> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Period", PrimitiveKind.STRING)

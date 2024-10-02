@@ -4,9 +4,9 @@ import com.toms223.winterboot.annotations.Controller
 import com.toms223.winterboot.annotations.mappings.GetMapping
 import com.toms223.winterboot.annotations.mappings.PostMapping
 import com.toms223.winterboot.annotations.parameters.Body
-import com.toms223.winterboot.annotations.parameters.Header
 import com.toms223.winterboot.annotations.parameters.Path
 import com.toms223.winterboot.annotations.parameters.Query
+import com.toms223.winterboot.annotations.parameters.Cookie as Biscuit
 import com.toms223.http.entities.account.LoginInfo
 import com.toms223.http.entities.account.RegisteringInfo
 import com.toms223.http.entities.account.ReturningAccount
@@ -19,34 +19,47 @@ import com.toms223.http.entities.item.ReturningItem
 import com.toms223.http.entities.item.ReturningItem.Companion.toReturningItems
 import kotlinx.datetime.LocalDate
 import com.toms223.services.Services
+import com.toms223.winterboot.CustomResponse
+import org.http4k.core.cookie.Cookie
 
 
 @Controller
 class AccountController(private val services: Services) {
-    @GetMapping("/accounts/{id}")
-    fun getAccountById(@Path id: Int, @Header authorization: String): ReturningAccount = services {
-        accountService.getAccountById(id).toReturningAccount(authorization.split(" ")[1])
+    @GetMapping("/accounts/me")
+    fun getAccountById(@Biscuit id: Int): ReturningAccount = services {
+        accountService.getAccountById(id).toReturningAccount()
     }
 
     @PostMapping("/accounts/login")
-    fun login(@Body loginInfo: LoginInfo): ReturningAccount = services {
+    fun login(@Body loginInfo: LoginInfo): CustomResponse = services {
         val account = accountService.checkPassword(loginInfo.email, loginInfo.password)
-        val token = tokenService.getAccountToken(account) ?: tokenService.createToken(account)
-        if (!tokenService.isExpired(token)) return@services account.toReturningAccount(token.value)
-        token.delete()
-        return@services  account.toReturningAccount(tokenService.createToken(account).value)
+        val token = tokenService.getAccountToken(account.id) ?: tokenService.createToken(account.id)
+        val tokenCookie = if (!tokenService.isExpired(token))
+            Cookie("token", token.value, httpOnly = true)
+        else
+            Cookie("token", tokenService.createToken(account.id).value, httpOnly = true)
+        val idCookie = Cookie("id", account.id.toString(), httpOnly = true)
+        val response = CustomResponse(listOf(tokenCookie, idCookie))
+        return@services response {
+            account.toReturningAccount()
+        }
     }
 
     @PostMapping("/accounts/register")
-    fun register(@Body registeringInfo: RegisteringInfo): ReturningAccount = services {
+    fun register(@Body registeringInfo: RegisteringInfo): CustomResponse = services {
         val account = accountService.createAccount(registeringInfo.username, registeringInfo.email, registeringInfo.password)
-        val token = tokenService.createToken(account)
-        return@services account.toReturningAccount(token.value)
+        val token = tokenService.createToken(account.id)
+        val tokenCookie = Cookie("token", token.value, httpOnly = true)
+        val idCookie = Cookie("id", account.id.toString(), httpOnly = true)
+        val response = CustomResponse(listOf(tokenCookie, idCookie))
+        return@services response {
+            account.toReturningAccount()
+        }
     }
 
-    @GetMapping("/accounts/{id}/bills")
+    @GetMapping("/accounts/me/bills")
     fun getBills(
-        @Path id: Int,
+        @Biscuit id: Int,
         @Query skip: Int,
         @Query limit: Int,
         @Query continuous: Boolean,
@@ -59,17 +72,15 @@ class AccountController(private val services: Services) {
         return@services bills.toReturningBills()
     }
 
-    @GetMapping("/accounts/{id}/carts")
-    fun getCarts(@Path id: Int, @Query skip: Int, @Query limit: Int): List<ReturningCart> = services {
-        val account = accountService.getAccountById(id)
-        val carts = itemCartService.getAccountCarts(account, limit, skip)
+    @GetMapping("/accounts/me/carts")
+    fun getCarts(@Biscuit id: Int, @Query skip: Int, @Query limit: Int): List<ReturningCart> = services {
+        val carts = itemCartService.getAccountCarts(id, limit, skip)
         return@services carts.toReturningCarts()
     }
 
-    @GetMapping("/accounts/{id}/items")
-    fun getItems(@Path id: Int, @Query skip: Int, @Query limit: Int): List<ReturningItem> = services {
-        val account = accountService.getAccountById(id)
-        val items = itemCartService.getUserItems(account, limit, skip)
+    @GetMapping("/accounts/me/items")
+    fun getItems(@Biscuit id: Int, @Query skip: Int, @Query limit: Int): List<ReturningItem> = services {
+        val items = itemCartService.getUserItems(id, limit, skip)
         return@services items.toReturningItems()
     }
 }

@@ -5,6 +5,7 @@ import com.toms223.exceptions.cart.CartNotFoundException
 import com.toms223.exceptions.item.ItemNotFoundException
 import com.toms223.services.ItemCartService
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.ktorm.database.Database
@@ -60,6 +61,7 @@ class ItemCartServiceTests {
                 item_id INTEGER NOT NULL REFERENCES ITEMS(id) ON DELETE CASCADE,
                 shopping_cart_id INTEGER NOT NULL REFERENCES SHOPPING_CARTS(id) ON DELETE CASCADE,
                 in_cart BOOLEAN NOT NULL DEFAULT FALSE,
+                account_id INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE,
                 quantity INTEGER NOT NULL DEFAULT 1
             );
             
@@ -106,17 +108,17 @@ class ItemCartServiceTests {
     @Test
     fun `create cart`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test@email.com", "P4ssword!")
-        val cart = itemCartService.createCart(account)
+        val cart = itemCartService.createCart(account.id)
         assertTrue {
-            cart.items.isEmpty() && cart.account == account
+            cart.items.isEmpty() && cart.account.id == account.id
         }
     }
     @Test
     fun `create item`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test2@email.com", "P4ssword!")
-        val item = itemCartService.createItem(account, "test")
+        val item = itemCartService.createItem(account.id, "test")
         assertTrue {
-            item.name == "test" && item.account == account
+            item.name == "test" && item.account.id == account.id
         }
     }
 
@@ -124,46 +126,46 @@ class ItemCartServiceTests {
     fun `get account carts`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test3@email.com", "P4ssword!")
         val carts = (1..10).map {
-            itemCartService.createCart(account)
+            itemCartService.createCart(account.id)
         }
-        val retrievedCarts = itemCartService.getAccountCarts(account, 10, 0)
-        assertContentEquals(carts, retrievedCarts)
+        val retrievedCarts = itemCartService.getAccountCarts(account.id, 10, 0)
+        assertContentEquals(carts.map { it.id }, retrievedCarts.map { it.id })
     }
 
     @Test
     fun `get user items`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test4@email.com", "P4ssword!")
         val items = (1..10).map {
-            itemCartService.createItem(account, "test$it")
+            itemCartService.createItem(account.id, "test$it")
         }
-        val retrievedItems = itemCartService.getUserItems(account, 10, 0)
-        assertContentEquals(items, retrievedItems)
+        val retrievedItems = itemCartService.getUserItems(account.id, 10, 0)
+        assertContentEquals(items.map { it.id }, retrievedItems.map { it.id })
     }
 
     @Test
     fun `get item by id`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test5@email.com", "P4ssword!")
-        val item = itemCartService.createItem(account, "test")
-        val retrievedItem = itemCartService.getItemById(item.id)
-        assertEquals(item, retrievedItem)
+        val item = itemCartService.createItem(account.id, "test")
+        val retrievedItem = itemCartService.getItemById(account.id, item.id)
+        assertEquals(item.id, retrievedItem.id)
     }
 
     @Test
     fun `get cart by id`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test6@email.com", "P4ssword!")
-        val cart = itemCartService.createCart(account)
-        val retrievedCart = itemCartService.getCartById(cart.id)
-        assertEquals(cart, retrievedCart)
+        val cart = itemCartService.createCart(account.id)
+        val retrievedCart = itemCartService.getCartById(account.id, cart.id)
+        assertEquals(cart.id, retrievedCart.id)
     }
 
     @Test
     fun `add item to cart`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test7@email.com", "P4ssword!")
-        val item = itemCartService.createItem(account, "test")
-        val cart = itemCartService.createCart(account)
-        itemCartService.addItemToCart(cart, item)
+        val item = itemCartService.createItem(account.id, "test")
+        var cart = itemCartService.createCart(account.id)
+        cart = itemCartService.addItemToCart(account.id, cart.id, item.id)
         assertTrue {
-            cart.items.contains(item)
+            cart.items.any { it.id == item.id }
         }
     }
 
@@ -171,20 +173,20 @@ class ItemCartServiceTests {
     fun `add items to cart`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test8@email.com", "P4ssword!")
         val items = (1..10).map {
-            itemCartService.createItem(account, "test$it")
+            itemCartService.createItem(account.id, "test$it")
         }
-        val cart = itemCartService.createCart(account)
-        itemCartService.addItemsToCart(cart, items)
-        assertContentEquals(items, cart.items)
+        var cart = itemCartService.createCart(account.id)
+        cart = itemCartService.addItemsToCart(account.id, cart.id, items.map { it.id })
+        assertContentEquals( items.map { it.id }, cart.items.map { it.id } )
     }
 
     @Test
     fun `remove item from cart`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test9@email.com", "P4ssword!")
-        val item = itemCartService.createItem(account, "test")
-        val cart = itemCartService.createCart(account)
-        itemCartService.addItemToCart(cart, item)
-        itemCartService.removeItemFromCart(cart, item)
+        val item = itemCartService.createItem(account.id, "test")
+        val cart = itemCartService.createCart(account.id)
+        itemCartService.addItemToCart(account.id, cart.id, item.id)
+        itemCartService.removeItemFromCart(account.id, cart.id, item.id)
         assertTrue {
             !cart.items.contains(item)
         }
@@ -194,11 +196,11 @@ class ItemCartServiceTests {
     fun `remove items from cart`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test10@email.com", "P4ssword!")
         val items = (1..10).map {
-            itemCartService.createItem(account, "test$it")
+            itemCartService.createItem(account.id, "test$it")
         }
-        val cart = itemCartService.createCart(account)
-        itemCartService.addItemsToCart(cart, items)
-        itemCartService.removeItemsFromCart(cart, items)
+        val cart = itemCartService.createCart(account.id)
+        itemCartService.addItemsToCart(account.id, cart.id, items.map { it.id })
+        itemCartService.removeItemsFromCart(account.id, cart.id, items.map { it.id })
         assertTrue {
             cart.items.isEmpty()
         }
@@ -207,21 +209,21 @@ class ItemCartServiceTests {
     @Test
     fun `delete cart`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test11@email.com", "P4ssword!")
-        val cart = itemCartService.createCart(account)
-        itemCartService.deleteCart(cart.id)
-        assertThrows<CartNotFoundException> { itemCartService.getCartById(cart.id) }
+        val cart = itemCartService.createCart(account.id)
+        itemCartService.deleteCart(account.id, cart.id)
+        assertThrows<CartNotFoundException> { itemCartService.getCartById(account.id, cart.id) }
     }
 
     @Test
     fun `delete item`() {
         val account = databaseRepository.accountRepository.createAccount("test", "test12@email.com", "P4ssword!")
-        val cart = itemCartService.createCart(account)
-        val item = itemCartService.createItem(account, "test")
-        itemCartService.addItemToCart(cart, item)
-        assertTrue { cart.items.contains(item) }
-        itemCartService.deleteItem(item.id)
-        assertThrows<ItemNotFoundException> { itemCartService.getItemById(item.id) }
-        itemCartService.updateCartItems(cart)
+        var cart = itemCartService.createCart(account.id)
+        val item = itemCartService.createItem(account.id, "test")
+        cart = itemCartService.addItemToCart(account.id, cart.id, item.id)
+        assertTrue { cart.items.any { it.id == item.id } }
+        itemCartService.deleteItem(account.id, item.id)
+        assertThrows<ItemNotFoundException> { itemCartService.getItemById(account.id, item.id) }
+        cart = itemCartService.getCartById(account.id, cart.id)
         assertTrue { !cart.items.contains(item) }
     }
 }

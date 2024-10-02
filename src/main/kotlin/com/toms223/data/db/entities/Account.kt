@@ -6,7 +6,7 @@ import org.ktorm.entity.Entity
 
 interface Account: Entity<Account>{
     companion object : Entity.Factory<Account>()
-    val id: Int
+    var id: Int
     var username: String
     var email: String
     var passwordHash: String

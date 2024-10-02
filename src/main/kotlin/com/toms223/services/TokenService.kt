@@ -10,15 +10,15 @@ class TokenService(val databaseRepository: DatabaseRepository) {
         tokenRepository.getToken(value) ?: throw TokenNotFoundException()
     }
 
-    fun createToken(account: Account) = databaseRepository {
-        tokenRepository.createToken(account)
+    fun createToken(accountId: Int) = databaseRepository {
+        tokenRepository.createToken(accountId)
     }
 
     fun isExpired(token: Token) = databaseRepository {
         tokenRepository.isExpired(token)
     }
 
-    fun getAccountToken(account: Account) = databaseRepository {
-        tokenRepository.getAccountToken(account)
+    fun getAccountToken(accountId: Int) = databaseRepository {
+        tokenRepository.getAccountToken(accountId)
     }
 }

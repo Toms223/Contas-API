@@ -63,6 +63,7 @@ class BillServiceTests {
                 item_id INTEGER NOT NULL REFERENCES ITEMS(id) ON DELETE CASCADE,
                 shopping_cart_id INTEGER NOT NULL REFERENCES SHOPPING_CARTS(id) ON DELETE CASCADE,
                 in_cart BOOLEAN NOT NULL DEFAULT FALSE,
+                account_id INTEGER NOT NULL REFERENCES ACCOUNTS(id) ON DELETE CASCADE,
                 quantity INTEGER NOT NULL DEFAULT 1
             );
             
@@ -110,7 +111,7 @@ class BillServiceTests {
     fun `create a bill`() {
         val account = AccountService(databaseRepository).createAccount("test", "test@email.com", "P4ssword!")
         val date = Instant.currentDate
-        val bill = billService.createBill("test", date, false, Period.ofDays(30), account, )
+        val bill = billService.createBill(account.id,"test", date, false, Period.ofDays(30))
         assertTrue {
             bill.name == "test" &&
                     bill.date == Instant.currentDate.toJavaLocalDate() &&
@@ -123,7 +124,7 @@ class BillServiceTests {
         val account = AccountService(databaseRepository).createAccount("test", "test2@email.com", "P4ssword!")
         val date = Instant.currentDate
         val bills = (1..10).map {
-            billService.createBill("test$it", date, false, Period.ofDays(30), account)
+            billService.createBill(account.id,"test$it", date, false, Period.ofDays(30))
         }
         val accountBills = billService.getAccountBills(account)
         assertContentEquals(bills, accountBills)
@@ -133,27 +134,27 @@ class BillServiceTests {
     fun `get bill by id`() {
         val account = AccountService(databaseRepository).createAccount("test", "test3@email.com", "P4ssword!")
         val date = Instant.currentDate
-        val bill = billService.createBill("test", date, false, Period.ofDays(30), account)
-        val retrievedBill = billService.getBillById(bill.id)
-        assertEquals(bill, retrievedBill)
+        val bill = billService.createBill(account.id,"test", date, false, Period.ofDays(30))
+        val retrievedBill = billService.getBillById(account.id, bill.id)
+        assertEquals(bill.id, retrievedBill.id)
     }
 
     @Test
     fun `delete a bill`() {
         val account = AccountService(databaseRepository).createAccount("test", "test4@email.com", "P4ssword!")
         val date = Instant.currentDate
-        val bill = billService.createBill("test", date, false, Period.ofDays(30), account)
-        billService.deleteBill(bill.id)
-        assertThrows<BillNotFoundException> { billService.getBillById(bill.id) }
+        val bill = billService.createBill(account.id,"test", date, false, Period.ofDays(30))
+        billService.deleteBill(account.id, bill.id)
+        assertThrows<BillNotFoundException> { billService.getBillById(account.id, bill.id) }
     }
 
     @Test
     fun `update a bill`() {
         val account = AccountService(databaseRepository).createAccount("test", "test5@email.com", "P4ssword!")
         val date = Instant.currentDate
-        val bill = billService.createBill("test", date, false, Period.ofDays(30), account)
-        billService.updateBill(bill.id, "new name", date.plus(1, DateTimeUnit.DAY),true, Period.ofMonths(2))
-        val updatedBill = billService.getBillById(bill.id)
+        val bill = billService.createBill(account.id,"test", date, false, Period.ofDays(30))
+        billService.updateBill(account.id, bill.id, "new name", date.plus(1, DateTimeUnit.DAY),true, Period.ofMonths(2))
+        val updatedBill = billService.getBillById(account.id, bill.id)
         assertTrue{
             updatedBill.name == "new name"
         }

@@ -6,7 +6,6 @@ import com.toms223.http.entities.account.RegisteringInfo
 import com.toms223.http.entities.account.ReturningAccount
 import com.toms223.http.entities.bill.NewBill
 import com.toms223.http.entities.bill.ReturningBill
-import com.toms223.http.entities.cart.NewCart
 import com.toms223.http.entities.cart.ReturningCart
 import com.toms223.http.entities.item.ItemList
 import com.toms223.http.entities.item.NewItem
@@ -14,9 +13,10 @@ import com.toms223.http.entities.item.ReturningItem
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
-import org.http4k.core.Method
-import org.http4k.core.Request
-import org.http4k.core.Status
+import org.http4k.core.*
+import org.http4k.core.cookie.Cookie
+import org.http4k.core.cookie.cookie
+import org.http4k.core.cookie.cookies
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -43,27 +43,34 @@ class ControllerTests {
         return Json.decodeFromString<ReturningAccount>(response)
     }
 
-    private fun createNewBillRequest(accountId: Int, tokenValue: String): Request {
-        val newBill = NewBill("New Bill", LocalDate.parse("2025-05-01"), true, Period.ofMonths(1), accountId)
+    private fun createNewBillRequest(accountId: Cookie, tokenValue: Cookie): Request {
+        val newBill = NewBill("New Bill", LocalDate.parse("2025-05-01"), true, Period.ofMonths(1))
         val requestJson = Json.encodeToString(newBill)
-        return Request(Method.POST, "/bills").body(requestJson).header("Authorization", "Bearer $tokenValue")
+        return Request(Method.POST, "/bills").body(requestJson).cookie(accountId).cookie(tokenValue)
     }
 
     private fun getReturningBill(response: String): ReturningBill {
         return Json.decodeFromString<ReturningBill>(response)
     }
 
-    private fun createNewCartRequest(accountId: Int, tokenValue: String): Request {
-        val newCart = NewCart(accountId)
-        return Request(Method.POST, "/carts").body(Json.encodeToString(newCart)).header("Authorization", "Bearer $tokenValue")
+    private fun createNewCartRequest(accountId: Cookie, tokenValue: Cookie): Request {
+        return Request(Method.POST, "/carts").cookie(accountId).cookie(tokenValue)
     }
 
     private fun getReturningCart(response: String): ReturningCart = Json.decodeFromString<ReturningCart>(response)
 
-    private fun createNewItemRequest(accountId: Int, tokenValue: String): Request {
-        val newItem = NewItem("New Item", accountId)
+    private fun createNewItemRequest(accountId: Cookie, tokenValue: Cookie): Request {
+        val newItem = NewItem("New Item")
         val newItemJson = Json.encodeToString(newItem)
-        return Request(Method.POST, "/items").body(newItemJson).header("Authorization", "Bearer $tokenValue")
+        return Request(Method.POST, "/items").body(newItemJson).cookie(accountId).cookie(tokenValue)
+    }
+
+    private fun getIdCookie(response: Response) :Cookie {
+        return response.cookies().first{ it.name == "id"}
+    }
+
+    private fun getTokenCookie(response: Response) :Cookie {
+        return response.cookies().first{ it.name == "token"}
     }
 
     private fun getReturningItem(response: String) = Json.decodeFromString<ReturningItem>(response)
@@ -73,13 +80,16 @@ class ControllerTests {
         val response = client(registerNewUserRequest())
         val body = response.body.toString()
         val responseJson = Json.decodeFromString<JsonElement>(body)
-        assertNotNull(responseJson.jsonObject["token"])
+        assertNotNull(responseJson.jsonObject["username"])
     }
 
     @Test
     fun `should get account by id`() {
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val request = Request(Method.GET, "/accounts/${user.id}").header("Authorization", "Bearer ${user.token}")
+        val userResponse = client(registerNewUserRequest())
+        val id = getIdCookie(userResponse)
+        val token = getTokenCookie(userResponse)
+        val user = getReturningAccount(userResponse.body.toString())
+        val request = Request(Method.GET, "/accounts/me").cookie(id).cookie(token)
         val response = client(request)
         val responseUser = getReturningAccount(response.body.toString())
         assertEquals(user, responseUser)
@@ -98,8 +108,10 @@ class ControllerTests {
 
     @Test
     fun `Should create new bill`() {
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val response = client(createNewBillRequest(user.id, user.token))
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val response = client(createNewBillRequest(id, token))
         val bill = assertDoesNotThrow { getReturningBill(response.body.toString()) }
         assertEquals("New Bill", bill.name)
         assertEquals(LocalDate.parse("2025-05-01"), bill.date)
@@ -110,16 +122,19 @@ class ControllerTests {
 
     @Test
     fun `should retrieve user bills`() {
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val bills = (1..10).map{getReturningBill(client(createNewBillRequest(user.id, user.token)).body.toString()) }
-        val request = Request(Method.GET, "/accounts/${user.id}/bills")
-            .header("Authorization", "Bearer ${user.token}")
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val bills = (1..10).map{getReturningBill(client(createNewBillRequest(id, token)).body.toString()) }
+        val request = Request(Method.GET, "/accounts/me/bills")
             .query("skip", "0")
             .query("limit", "20")
             .query("continuous", "true")
             .query("paid", "false")
             .query("before","2025-05-02")
             .query("after", "2024-05-02")
+            .cookie(id.httpOnly())
+            .cookie(token.httpOnly())
         val response = client(request)
         val jsonResponse = Json.parseToJsonElement(response.body.toString()).jsonObject
         val billList = Json.decodeFromJsonElement<List<ReturningBill>>(jsonResponse["data"] ?: throw AssertionError("Bills not found"))
@@ -130,10 +145,13 @@ class ControllerTests {
 
     @Test
     fun `should retrieve bill by id`() {
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val bill = getReturningBill(client(createNewBillRequest(user.id, user.token)).body.toString())
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val bill = getReturningBill(client(createNewBillRequest(id,token)).body.toString())
         val request = Request(Method.GET, "/bills/${bill.id}")
-            .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
         val response = client(request)
         val receivedBill = getReturningBill(response.body.toString())
         assertEquals(bill, receivedBill)
@@ -141,26 +159,33 @@ class ControllerTests {
 
     @Test
     fun `should delete bill by id`() {
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val bill = getReturningBill(client(createNewBillRequest(user.id, user.token)).body.toString())
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val bill = getReturningBill(client(createNewBillRequest(id,token)).body.toString())
         val request = Request(Method.DELETE, "/bills/${bill.id}")
-            .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
         client(request)
         val getBill = client(
             Request(Method.GET, "/bills/${bill.id}")
-                .header("Authorization", "Bearer ${user.token}")
+                .header("Authorization", "Bearer $token")
         )
         assertTrue(getBill.status == Status.NOT_FOUND)
     }
 
     @Test
     fun `should pay and unpay bill by id`() {
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val bill = getReturningBill(client(createNewBillRequest(user.id, user.token)).body.toString())
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val bill = getReturningBill(client(createNewBillRequest(id, token)).body.toString())
         val payRequest = Request(Method.PUT, "/bills/${bill.id}/pay")
-            .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
         val unpayRequest = Request(Method.PUT, "/bills/${bill.id}/unpay")
-            .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
         val payResponse = client(payRequest)
         val unpayResponse = client(unpayRequest)
         val payBill = getReturningBill(payResponse.body.toString())
@@ -173,11 +198,14 @@ class ControllerTests {
 
     @Test
     fun `should update bill by id`() {
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val bill = getReturningBill(client(createNewBillRequest(user.id, user.token)).body.toString())
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val bill = getReturningBill(client(createNewBillRequest(id, token)).body.toString())
         val newBill = ReturningBill(bill.id, "Updated Bill", LocalDate.parse("2025-06-01"), false, Period.ofYears(1), true)
         val request = Request(Method.PUT, "/bills")
-            .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
             .body(Json.encodeToString(newBill))
         val response = client(request)
         val updatedBill = getReturningBill(response.body.toString())
@@ -191,26 +219,33 @@ class ControllerTests {
 
     @Test
     fun `should create a new cart`() {
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val response = client(createNewCartRequest(user.id, user.token))
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val response = client(createNewCartRequest(id, token))
         val cart = assertDoesNotThrow{ getReturningCart(response.body.toString()) }
         assertTrue(cart.itemList.isEmpty())
     }
 
     @Test
     fun `should create a new item`() {
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val response = client(createNewItemRequest(user.id, user.token))
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val response = client(createNewItemRequest(id, token))
         val item = assertDoesNotThrow { getReturningItem(response.body.toString()) }
         assertEquals("New Item", item.name)
     }
 
     @Test
     fun `should get item by id`(){
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val item = getReturningItem(client(createNewItemRequest(user.id, user.token)).body.toString())
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val item = getReturningItem(client(createNewItemRequest(id, token)).body.toString())
         val request = Request(Method.GET, "/items/${item.id}")
-        .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
         val response = client(request)
         val returningItem = getReturningItem(response.body.toString())
         assertEquals(item, returningItem)
@@ -218,22 +253,29 @@ class ControllerTests {
 
     @Test
     fun `should remove item by id`(){
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val item = getReturningItem(client(createNewItemRequest(user.id, user.token)).body.toString())
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val item = getReturningItem(client(createNewItemRequest(id, token)).body.toString())
         val request = Request(Method.DELETE, "/items/${item.id}")
-        .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
         client(request)
         val response = client(Request(Method.GET, "/items/${item.id}")
-            .header("Authorization", "Bearer ${user.token}"))
+            .cookie(token)
+            .cookie(id))
         assertTrue(response.status == Status.NOT_FOUND)
     }
 
     @Test
     fun `should get cart by id`(){
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val cart = getReturningCart(client(createNewCartRequest(user.id, user.token)).body.toString())
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val cart = getReturningCart(client(createNewCartRequest(id, token)).body.toString())
         val request = Request(Method.GET, "/carts/${cart.id}")
-        .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
         val response = client(request)
         val returningCart = getReturningCart(response.body.toString())
         assertEquals(cart, returningCart)
@@ -241,20 +283,24 @@ class ControllerTests {
 
     @Test
     fun `should add items to cart`(){
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val cart = getReturningCart(client(createNewCartRequest(user.id, user.token)).body.toString())
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val cart = getReturningCart(client(createNewCartRequest(id, token)).body.toString())
         val items = (1..10).map {
-            getReturningItem(client(createNewItemRequest(user.id, user.token)).body.toString())
+            getReturningItem(client(createNewItemRequest(id, token)).body.toString())
         }
         val itemList = ItemList(items.map { it.id })
         val request = Request(Method.PUT, "/carts/${cart.id}/items")
-            .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
             .body(Json.encodeToString(itemList))
         val response = client(request)
         val jsonResponse = Json.parseToJsonElement(response.body.toString()).jsonObject
         val returningItems = Json.decodeFromJsonElement<List<ReturningItem>>(jsonResponse["data"] ?: throw AssertionError("No items found"))
         val updatedCartRequest = Request(Method.GET, "/carts/${cart.id}")
-            .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
         val updatedCart = getReturningCart(client(updatedCartRequest).body.toString())
         assertTrue(returningItems.size == 10)
         assertContentEquals(updatedCart.itemList, returningItems)
@@ -262,26 +308,31 @@ class ControllerTests {
 
     @Test
     fun `should remove items from cart`(){
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val cart = getReturningCart(client(createNewCartRequest(user.id, user.token)).body.toString())
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val cart = getReturningCart(client(createNewCartRequest(id, token)).body.toString())
         val items = (1..10).map {
-            getReturningItem(client(createNewItemRequest(user.id, user.token)).body.toString())
+            getReturningItem(client(createNewItemRequest(id, token)).body.toString())
         }
         val itemList = ItemList(items.map { it.id })
         val putRequest = Request(Method.PUT, "/carts/${cart.id}/items")
-            .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
             .body(Json.encodeToString(itemList))
         client(putRequest)
         val removedItems = items.subList(0, 5)
         val removedItemList = ItemList(removedItems.map { it.id })
         val request = Request(Method.DELETE, "/carts/${cart.id}/items")
-            .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
             .body(Json.encodeToString(removedItemList))
         val response = client(request)
         val jsonResponse = Json.parseToJsonElement(response.body.toString()).jsonObject
         val returningItems = Json.decodeFromJsonElement<List<ReturningItem>>(jsonResponse["data"] ?: throw AssertionError("No items found"))
         val updatedCartRequest = Request(Method.GET, "/carts/${cart.id}")
-            .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
         val updatedCart = getReturningCart(client(updatedCartRequest).body.toString())
         assertTrue(returningItems.size == 5)
         assertContentEquals(updatedCart.itemList, returningItems)
@@ -289,21 +340,25 @@ class ControllerTests {
 
     @Test
     fun `should retrieve account carts with items`(){
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
         val carts = (1..10).map {
-            val cart = getReturningCart(client(createNewCartRequest(user.id, user.token)).body.toString())
+            val cart = getReturningCart(client(createNewCartRequest(id, token)).body.toString())
             val items = (1..10).map {
-                getReturningItem(client(createNewItemRequest(user.id, user.token)).body.toString())
+                getReturningItem(client(createNewItemRequest(id, token)).body.toString())
             }
             val itemList = ItemList(items.map { it.id })
             val request = Request(Method.PUT, "/carts/${cart.id}/items")
-                .header("Authorization", "Bearer ${user.token}")
+                .cookie(token)
+                .cookie(id)
                 .body(Json.encodeToString(itemList))
             client(request)
             cart.copy(itemList = items)
         }
-        val request = Request(Method.GET, "/accounts/${user.id}/carts")
-            .header("Authorization", "Bearer ${user.token}")
+        val request = Request(Method.GET, "/accounts/me/carts")
+            .cookie(token)
+            .cookie(id)
             .query("skip", "0")
             .query("limit", "20")
         val response = client(request)
@@ -318,24 +373,31 @@ class ControllerTests {
 
     @Test
     fun `should remove cart by id`(){
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val cart = getReturningCart(client(createNewCartRequest(user.id, user.token)).body.toString())
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val cart = getReturningCart(client(createNewCartRequest(id, token)).body.toString())
         val request = Request(Method.DELETE, "/carts/${cart.id}")
-            .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
         val deletionResponse = client(request)
         assertTrue(deletionResponse.status == Status.OK)
         val response = client(Request(Method.GET, "/carts/${cart.id}")
-            .header("Authorization", "Bearer ${user.token}"))
+            .cookie(token)
+            .cookie(id))
         assertTrue(response.status == Status.NOT_FOUND)
     }
 
     @Test
     fun `should add a single item to cart`(){
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val item = getReturningItem(client(createNewItemRequest(user.id, user.token)).body.toString())
-        val cart = getReturningCart(client(createNewCartRequest(user.id, user.token)).body.toString())
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val item = getReturningItem(client(createNewItemRequest(id, token)).body.toString())
+        val cart = getReturningCart(client(createNewCartRequest(id, token)).body.toString())
         val request = Request(Method.PUT, "/carts/${cart.id}/items/${item.id}")
-        .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
         val response = client(request)
         val json = Json.parseToJsonElement(response.body.toString()).jsonObject
         val itemList = Json.decodeFromJsonElement<List<ReturningItem>>(json["data"] ?: throw AssertionError("No items found"))
@@ -344,13 +406,17 @@ class ControllerTests {
 
     @Test
     fun `should remove a single item from cart`(){
-        val user = getReturningAccount(client(registerNewUserRequest()).body.toString())
-        val item = getReturningItem(client(createNewItemRequest(user.id, user.token)).body.toString())
-        val cart = getReturningCart(client(createNewCartRequest(user.id, user.token)).body.toString())
+        val user = client(registerNewUserRequest())
+        val id = getIdCookie(user)
+        val token = getTokenCookie(user)
+        val item = getReturningItem(client(createNewItemRequest(id, token)).body.toString())
+        val cart = getReturningCart(client(createNewCartRequest(id, token)).body.toString())
         client(Request(Method.PUT, "/carts/${cart.id}/items/${item.id}")
-            .header("Authorization", "Bearer ${user.token}"))
+            .cookie(token)
+            .cookie(id))
         val request = Request(Method.DELETE, "/carts/${cart.id}/items/${item.id}")
-        .header("Authorization", "Bearer ${user.token}")
+            .cookie(token)
+            .cookie(id)
         val response = client(request)
         val json = Json.parseToJsonElement(response.body.toString()).jsonObject
         val itemList = Json.decodeFromJsonElement<List<ReturningItem>>(json["data"] ?: throw AssertionError("No items found"))

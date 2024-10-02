@@ -27,21 +27,21 @@ class BillService(val databaseRepository: DatabaseRepository) {
         billRepository.getAccountBills(account.id, skip, limit, continuous, paid, before, after)
     }
 
-    fun getBillById(billId: Int) = databaseRepository {
-        billRepository.getBillById(billId) ?: throw BillNotFoundException()
+    fun getBillById(accountId: Int, billId: Int) = databaseRepository {
+        billRepository.getBillById(accountId, billId) ?: throw BillNotFoundException()
     }
 
-    fun createBill(name: String, date: LocalDate, continuous: Boolean, period: Period, account: Account) = databaseRepository {
+    fun createBill(accountId: Int, name: String, date: LocalDate, continuous: Boolean, period: Period) = databaseRepository {
         if(name == "") throw InvalidNameException("Name cannot be empty")
-        billRepository.createBill(name, date, continuous, account, period)
+        billRepository.createBill(accountId, name, date, continuous, period)
     }
 
-    fun deleteBill(billId: Int) = databaseRepository {
-        billRepository.getBillById(billId)?.delete() ?: throw BillNotFoundException()
+    fun deleteBill(accountId: Int, billId: Int) = databaseRepository {
+        billRepository.getBillById(accountId, billId)?.delete() ?: throw BillNotFoundException()
     }
 
-    fun updateBill(billId: Int, name: String? = null, date: LocalDate? = null, continuous: Boolean? = null, period: Period?) = databaseRepository {
-        val bill = billRepository.getBillById(billId) ?: throw BillNotFoundException()
+    fun updateBill(accountId: Int, billId: Int, name: String? = null, date: LocalDate? = null, continuous: Boolean? = null, period: Period?) = databaseRepository {
+        val bill = billRepository.getBillById(accountId, billId) ?: throw BillNotFoundException()
         name?.let {
             if (name == "") throw InvalidNameException("Name cannot be empty")
             bill.changeName(name)
@@ -57,14 +57,14 @@ class BillService(val databaseRepository: DatabaseRepository) {
         return@databaseRepository bill
     }
 
-    fun payBill(billId: Int) = databaseRepository {
-        val bill = billRepository.getBillById(billId) ?: throw BillNotFoundException()
+    fun payBill(accountId: Int, billId: Int) = databaseRepository {
+        val bill = billRepository.getBillById(accountId, billId) ?: throw BillNotFoundException()
         bill.pay()
         return@databaseRepository bill
     }
 
-    fun unpayBill(billId: Int) = databaseRepository {
-        val bill = billRepository.getBillById(billId) ?: throw BillNotFoundException()
+    fun unpayBill(accountId: Int, billId: Int) = databaseRepository {
+        val bill = billRepository.getBillById(accountId, billId) ?: throw BillNotFoundException()
         bill.unpay()
         return@databaseRepository bill
     }

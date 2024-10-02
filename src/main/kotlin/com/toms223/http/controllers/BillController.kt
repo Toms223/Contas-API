@@ -11,38 +11,44 @@ import com.toms223.http.entities.bill.NewBill
 import com.toms223.http.entities.bill.ReturningBill
 import com.toms223.http.entities.bill.ReturningBill.Companion.toReturningBill
 import com.toms223.services.Services
+import com.toms223.winterboot.annotations.parameters.Cookie
 
 
 @Controller
 class BillController(private val services: Services) {
-    @GetMapping("/bills/{id}")
-    fun getBillById(@Path id: Int): ReturningBill {
-        return services.billService.getBillById(id).toReturningBill()
+    @GetMapping("/bills/{billId}")
+    fun getBillById(@Cookie id: Int, @Path billId: Int): ReturningBill {
+        return services.billService.getBillById(id, billId).toReturningBill()
     }
 
-    @DeleteMapping("/bills/{id}")
-    fun deleteBillById(@Path id: Int){
-        services.billService.deleteBill(id)
+    @DeleteMapping("/bills/{billId}")
+    fun deleteBillById(@Cookie id: Int, @Path billId: Int){
+        services.billService.deleteBill(id, billId)
     }
 
-    @PutMapping("/bills/{id}/pay")
-    fun payBillById(@Path id: Int): ReturningBill {
-        return services.billService.payBill(id).toReturningBill()
+    @PutMapping("/bills/{billId}/pay")
+    fun payBillById(@Cookie id: Int, @Path billId: Int): ReturningBill {
+        return services.billService.payBill(id, billId).toReturningBill()
     }
 
-    @PutMapping("/bills/{id}/unpay")
-    fun unpayBillById(@Path id: Int): ReturningBill {
-        return services.billService.unpayBill(id).toReturningBill()
+    @PutMapping("/bills/{billId}/unpay")
+    fun unpayBillById(@Cookie id: Int, @Path billId: Int): ReturningBill {
+        return services.billService.unpayBill(id, billId).toReturningBill()
     }
 
     @PutMapping("/bills")
-    fun updateBillById(@Body receivingBill: ReturningBill): ReturningBill {
-        return services.billService.updateBill(receivingBill.id, receivingBill.name, receivingBill.date, receivingBill.continuous, receivingBill.period).toReturningBill()
+    fun updateBillById(@Cookie id: Int, @Body receivingBill: ReturningBill): ReturningBill {
+        return services.billService.updateBill(id,
+            receivingBill.id,
+            receivingBill.name,
+            receivingBill.date,
+            receivingBill.continuous,
+            receivingBill.period
+        ).toReturningBill()
     }
 
     @PostMapping("/bills")
-    fun createBill(@Body newBill: NewBill): ReturningBill {
-        val account = services.accountService.getAccountById(newBill.accountId)
-        return services.billService.createBill(newBill.name, newBill.date, newBill.continuous, newBill.period ,account).toReturningBill()
+    fun createBill(@Cookie id: Int, @Body newBill: NewBill): ReturningBill {
+        return services.billService.createBill(id, newBill.name, newBill.date, newBill.continuous, newBill.period).toReturningBill()
     }
 }
