@@ -4,7 +4,6 @@ import com.toms223.winterboot.annotations.Controller
 import com.toms223.winterboot.annotations.mappings.GetMapping
 import com.toms223.winterboot.annotations.mappings.PostMapping
 import com.toms223.winterboot.annotations.parameters.Body
-import com.toms223.winterboot.annotations.parameters.Path
 import com.toms223.winterboot.annotations.parameters.Query
 import com.toms223.winterboot.annotations.parameters.Cookie as Biscuit
 import com.toms223.http.entities.account.LoginInfo
